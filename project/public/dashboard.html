@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for displaying graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Global reset to fix default font sizes */
         body, html {
@@ -15,7 +17,7 @@
             padding: 0;
             height: 100%;
             font-family: 'Poppins', sans-serif;
-            font-size: 1rem; /* Set base font size */
+            font-size: 1rem;
         }
 
         /* Ensuring the page takes up full screen */
@@ -26,7 +28,7 @@
             height: 100%;
             width: 250px;
             background-color: #1e40af;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             z-index: 1000;
         }
 
@@ -41,7 +43,7 @@
 
         .sidebar .nav-link {
             color: #fff;
-            font-size: 1.25rem; /* Increase size of links */
+            font-size: 1.25rem;
         }
 
         .sidebar .nav-link:hover {
@@ -65,13 +67,14 @@
 
         .navbar {
             z-index: 1001;
-            font-size: 1.25rem; /* Make navbar text bigger */
+            font-size: 1.25rem;
         }
 
-        /* Ensure better button sizes */
-        .btn {
-            font-size: 1.1rem; /* Increase button size */
-            padding: 10px 20px;
+        /* Styling for dashboard cards */
+        .card {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         /* Ensure responsiveness for small screens */
@@ -103,7 +106,7 @@
         <h2 class="text-3xl text-white mb-6">KCET</h2>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="profile.html">Profile</a> <!-- Link updated to profile.html -->
+                <a class="nav-link" href="profile.html">Profile</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="choiceentry.html">Choice Entry</a>
@@ -132,15 +135,72 @@
             <h2 class="text-4xl font-bold text-blue-600 mb-4">About KCET</h2>
             <p class="text-lg text-gray-700">The Karnataka Common Entrance Test (KCET) is an entrance examination for students seeking admission to various professional courses in Karnataka. KCET is conducted by the Karnataka Examination Authority (KEA) and is one of the most important exams for students aspiring to pursue undergraduate studies in fields like Engineering, Medicine, and Agriculture in the state of Karnataka.</p>
 
-            <!-- Add other content like statistics, images, or more detailed information about KCET -->
-            <div class="mt-6">
-                <h3 class="text-2xl font-semibold text-blue-500">Why Choose KCET?</h3>
-                <ul class="list-disc pl-6 text-lg text-gray-700">
-                    <li>Opportunities for admission in top colleges in Karnataka.</li>
-                    <li>A fair and transparent examination process.</li>
-                    <li>Wide range of courses to choose from.</li>
-                    <li>Access to state-of-the-art educational facilities.</li>
-                </ul>
+            <!-- Dashboard Statistics Section -->
+            <div class="row">
+                <!-- Total Applications -->
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white p-4">
+                        <h5>Total Applications</h5>
+                        <h3 class="display-4">12,345</h3>
+                    </div>
+                </div>
+                <!-- Seats Available -->
+                <div class="col-md-4">
+                    <div class="card bg-success text-white p-4">
+                        <h5>Seats Available</h5>
+                        <h3 class="display-4">1,250</h3>
+                    </div>
+                </div>
+                <!-- Total Colleges -->
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white p-4">
+                        <h5>Total Colleges</h5>
+                        <h3 class="display-4">50+</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row mt-5">
+                <!-- Application Trends Chart -->
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h5>Application Trends</h5>
+                        <canvas id="applicationTrends"></canvas>
+                    </div>
+                </div>
+                <!-- Seat Availability Trends -->
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h5>Seat Availability Trends</h5>
+                        <canvas id="seatAvailabilityTrends"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights Section -->
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <div class="card p-4">
+                        <h5>Key Insights</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">KCET opens doors to top universities in Karnataka.</li>
+                            <li class="list-group-item">Over 1,200 seats available across various professional courses.</li>
+                            <li class="list-group-item">Transparent and fair examination process ensuring equal opportunities for all candidates.</li>
+                            <li class="list-group-item">Strong collaboration with government and private educational institutions.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Information Section -->
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <div class="card p-4">
+                        <h5>Additional Information</h5>
+                        <p class="text-lg text-gray-700">KCET offers multiple opportunities for candidates to choose from a wide variety of courses across various domains such as Engineering, Medicine, Agriculture, and many others. The examination is designed to ensure a level playing field for all applicants with robust measures in place for fairness and transparency.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -165,7 +225,39 @@
             sidebar.classList.add('collapsed');
             mainContent.classList.add('expanded');
         });
-    </script>
 
+        // Chart.js for displaying charts
+        var ctx1 = document.getElementById('applicationTrends').getContext('2d');
+        var ctx2 = document.getElementById('seatAvailabilityTrends').getContext('2d');
+
+        // Application Trends Chart
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Applications',
+                    data: [200, 400, 600, 800, 1000, 1200, 1400],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false
+                }]
+            }
+        });
+
+        // Seat Availability Trends Chart
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['Engineering', 'Medicine', 'Agriculture', 'Management', 'Others'],
+                datasets: [{
+                    label: 'Seats Available',
+                    data: [500, 200, 300, 100, 150],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            }
+        });
+    </script>
 </body>
 </html>
