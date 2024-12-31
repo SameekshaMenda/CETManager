@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choice Entry | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<!-- Navbar -->
+<nav class="bg-blue-600 text-white p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="/dashboard" class="text-xl font-semibold">KCET Dashboard</a>
+        <a href="javascript:void(0)" id="logoutButton" class="bg-red-600 p-2 rounded-md hover:bg-red-700">Logout</a>
+    </div>
+</nav>
+
+<!-- Choice Entry Form -->
+<div class="container mx-auto my-10 p-6 bg-white rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold text-center mb-6">Submit Your College and Branch Choices</h2>
+
+    <!-- Error message -->
+    <div id="errorMessage" class="bg-red-500 text-white p-4 mb-4 rounded-md hidden">
+        <strong>Error:</strong> <span id="errorText"></span>
+    </div>
+
+    <!-- Success message -->
+    <div id="successMessage" class="bg-green-500 text-white p-4 mb-4 rounded-md hidden">
+        <strong>Success:</strong> Your choices have been submitted!
+    </div>
+
+    <!-- Choice Form -->
+    <form id="choiceForm">
+        <div class="mb-4">
+            <label for="cet_number" class="block text-sm font-medium text-gray-700">CET Number</label>
+            <input type="text" id="cet_number" name="cet_number" class="mt-2 p-2 w-full border border-gray-300 rounded-md" required>
+        </div>
+
+        <div id="choicesContainer">
+            <!-- Dynamic choices will be added here -->
+            <div class="choice-entry mb-4" id="choice_1">
+                <label for="college_name_1" class="block text-sm font-medium text-gray-700">College Name</label>
+                <input type="text" id="college_name_1" name="choices[0][college_name]" class="mt-2 p-2 w-full border border-gray-300 rounded-md" required>
+                
+                <label for="branch_name_1" class="block text-sm font-medium text-gray-700 mt-2">Branch Name</label>
+                <input type="text" id="branch_name_1" name="choices[0][branch_name]" class="mt-2 p-2 w-full border border-gray-300 rounded-md" required>
+            </div>
+        </div>
+
+        <button type="button" id="addChoiceBtn" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 mt-4">Add Another Choice</button>
+
+        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-4">Submit Choices</button>
+    </form>
+</div>
+
+<!-- Tailwind CSS and JavaScript -->
+<script>
+    // Function to add another choice entry
+    let choiceCount = 1;
+    document.getElementById('addChoiceBtn').addEventListener('click', () => {
+        choiceCount++;
+        const choicesContainer = document.getElementById('choicesContainer');
+        const newChoice = document.createElement('div');
+        newChoice.classList.add('choice-entry', 'mb-4');
+        newChoice.id = `choice_${choiceCount}`;
+
+        newChoice.innerHTML = `
+            <label for="college_name_${choiceCount}" class="block text-sm font-medium text-gray-700">College Name</label>
+            <input type="text" id="college_name_${choiceCount}" name="choices[${choiceCount - 1}][college_name]" class="mt-2 p-2 w-full border border-gray-300 rounded-md" required>
+
+            <label for="branch_name_${choiceCount}" class="block text-sm font-medium text-gray-700 mt-2">Branch Name</label>
+            <input type="text" id="branch_name_${choiceCount}" name="choices[${choiceCount - 1}][branch_name]" class="mt-2 p-2 w-full border border-gray-300 rounded-md" required>
+        `;
+        
+        choicesContainer.appendChild(newChoice);
+    });
+
+    // Handle form submission
+    document.getElementById('choiceForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const cet_number = document.getElementById('cet_number').value;
+        const choices = [];
+
+        // Collect all the choices
+        for (let i = 0; i < choiceCount; i++) {
+            const college_name = document.querySelector(`#college_name_${i + 1}`).value;
+            const branch_name = document.querySelector(`#branch_name_${i + 1}`).value;
+
+            if (college_name && branch_name) {
+                choices.push({ college_name, branch_name });
+            }
+        }
+
+        if (choices.length === 0) {
+            showError('Please provide at least one valid choice.');
+            return;
+        }
+
+        // Submit choices to server
+        try {
+            const response = await fetch('/api/submitChoices', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cet_number, choices }),
+            });
+
+            const result = await response.json();
+
+            if (response.status === 200) {
+                showSuccess(result.message);
+            } else {
+                showError(result.error);
+            }
+        } catch (error) {
+            console.error('Error submitting choices:', error);
+            showError('Error submitting choices. Please try again later.');
+        }
+    });
+
+    // Function to show error message
+    function showError(message) {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('successMessage').style.display = 'none';
+    }
+
+    // Function to show success message
+    function showSuccess(message) {
+        document.getElementById('successMessage').style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('successMessage').textContent = message;
+    }
+
+    // Logout functionality
+    document.getElementById('logoutButton').addEventListener('click', () => {
+        localStorage.removeItem('cet_number'); // Clear CET number from local storage
+        window.location.href = 'login.html'; // Redirect to login page after logout
+    });
+</script>
+
+</body>
+</html>
+<!--hello-->
