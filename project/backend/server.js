@@ -183,6 +183,11 @@ app.post('/api/submitChoices', async (req, res) => {
         console.error('Error submitting choices:', err);
         res.status(500).send({ error: 'Error submitting choices. Please try again later.' });
     }
+  //   console.log({
+  //     cet_number: cetNumber,
+  //     choices: submittedChoices,
+  // });
+  
 });
 
   
