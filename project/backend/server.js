@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 const pool = mysql.createPool({
     host: 'localhost',  // Use your MySQL host here
     user: 'root',       // Use your MySQL user here
-    password: '4SF22CD036',  // Use your MySQL password here
+    password: 'Sinchana@26',  // Use your MySQL password here
     database: 'kcet_seats',  // Use your MySQL database name here
     waitForConnections: true,
     connectionLimit: 10,

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Dashboard Container -->
+    <div class="max-w-7xl mx-auto p-10 space-y-10">
+        <!-- Header Section -->
+        <header class="flex justify-between items-center bg-blue-600 text-white p-5 rounded-lg shadow-xl">
+            <h1 class="text-4xl font-extrabold">Admin Dashboard</h1>
+            <button id="logoutButton" class="px-6 py-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition">Logout</button>
+        </header>
+
+        <!-- Stats Section -->
+        <section class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4">Student Login Stats</h2>
+            <div class="flex justify-between items-center">
+                <div class="text-lg">
+                    <strong>Total Students Logged In:</strong>
+                    <span id="studentCount" class="text-blue-600">0</span> <!-- Dynamically updated -->
+                </div>
+                <button id="allocateButton" class="px-6 py-3 bg-green-500 text-white rounded-full shadow-lg hover:bg-green-600 transition">
+                    Trigger Allocation
+                </button>
+            </div>
+        </section>
+
+        <!-- Allocation Section -->
+        <section id="allocationSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+            <h2 class="text-2xl font-bold mb-4">Allocation Process</h2>
+            <p class="text-lg">Initiate the allocation process for the students logged in.</p>
+            <button id="startAllocation" class="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition">
+                Start Allocation
+            </button>
+            <div id="allocationStatus" class="mt-4 hidden text-green-600">Allocation is in progress...</div>
+        </section>
+    </div>
+
+    <script>
+        // Dummy data for logged in students
+        let loggedInStudents = 10; // This can be dynamically fetched from the server
+
+        // Function to update student count
+        function updateStudentCount() {
+            document.getElementById('studentCount').textContent = loggedInStudents;
+        }
+
+        // Trigger for allocation process
+        const allocateButton = document.getElementById('allocateButton');
+        const allocationSection = document.getElementById('allocationSection');
+
+        allocateButton.addEventListener('click', () => {
+            // Show the allocation section when button is clicked
+            allocationSection.classList.remove('hidden');
+        });
+
+        // Handle the start of allocation
+        const startAllocationButton = document.getElementById('startAllocation');
+        const allocationStatus = document.getElementById('allocationStatus');
+
+        startAllocationButton.addEventListener('click', () => {
+            allocationStatus.classList.remove('hidden');  // Show status message
+            // Simulate allocation process
+            setTimeout(() => {
+                allocationStatus.textContent = "Allocation Completed Successfully!";
+                allocationStatus.classList.add('text-green-700');
+            }, 3000);  // Simulate 3 seconds process
+        });
+
+        // Logout Button
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            // Redirect to the login page when logged out
+            window.location.href = 'index.html';
+        });
+
+        // Update the student count on page load
+        updateStudentCount();
+    </script>
+</body>
+</html>
