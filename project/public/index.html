@@ -115,55 +115,62 @@
         adminToggle.addEventListener('click', () => toggleRole(true));
 
         // Handle Login
-        const loginForm = document.getElementById('loginForm');
-        loginForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
+       // Handle Login
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
 
-            const cetNumber = document.getElementById('cet_number').value.trim();
-            const password = document.getElementById('password').value.trim();
+    const cetNumber = document.getElementById('cet_number').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-            if (!cetNumber || !password) {
-                alert("Please fill in all details.");
-                return;
-            }
+    if (!cetNumber || !password) {
+        alert("Please fill in all details.");
+        return;
+    }
 
-            const data = {
-                cet_number: cetNumber,
-                password: password,
-                role: adminToggle.classList.contains('bg-blue-600') ? 'admin' : 'student'
-            };
+    const data = {
+        cet_number: cetNumber,
+        password: password,
+        role: adminToggle.classList.contains('bg-blue-600') ? 'admin' : 'student'
+    };
 
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (response.status === 200) {
-                    localStorage.setItem('cet_number', cetNumber);
-                    alert('Login successful!');
-                    
-                    // Redirect based on user role
-                    if (adminToggle.classList.contains('bg-blue-600')) {
-                        window.location.href = 'admindashboard.html';  // Redirect to Admin Dashboard
-                    } else {
-                        window.location.href = 'dashboard.html';  // Redirect to Student Dashboard
-                    }
-                } else {
-                    errorMessage.classList.remove('hidden');
-                    errorMessage.textContent = result.error || 'Invalid credentials. Please try again.';
-                }
-            } catch (error) {
-                console.error('Error during login:', error);
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = 'Server error. Please try again later.';
-            }
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         });
+
+        const result = await response.json();
+
+        if (response.status === 200) {
+            // Store CET Number and Admin ID in localStorage
+            localStorage.setItem('cet_number', cetNumber);
+            if (data.role === 'admin') {
+                localStorage.setItem('admin_id', cetNumber);  // Save Admin ID
+            }
+
+            alert('Login successful!');
+
+            // Redirect based on user role
+            if (adminToggle.classList.contains('bg-blue-600')) {
+                window.location.href = 'admindashboard.html';  // Redirect to Admin Dashboard
+            } else {
+                window.location.href = 'dashboard.html';  // Redirect to Student Dashboard
+            }
+        } else {
+            errorMessage.classList.remove('hidden');
+            errorMessage.textContent = result.error || 'Invalid credentials. Please try again.';
+        }
+    } catch (error) {
+        console.error('Error during login:', error);
+        errorMessage.classList.remove('hidden');
+        errorMessage.textContent = 'Server error. Please try again later.';
+    }
+});
+
     </script>
 </body>
 </html>
