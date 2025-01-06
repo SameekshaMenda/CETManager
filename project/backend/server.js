@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 const pool = mysql.createPool({
     host: 'localhost',  // Use your MySQL host here
     user: 'root',       // Use your MySQL user here
-    password: 'Sinchana@26',  // Use your MySQL password here
+    password: '4SF22CD036',  // Use your MySQL password here
     database: 'kcet_seats',  // Use your MySQL database name here
     waitForConnections: true,
     connectionLimit: 10,
@@ -32,43 +32,84 @@ const pool = mysql.createPool({
 // Login endpoint
 
 app.post('/login', async (req, res) => {
-    const { cet_number, password, role } = req.body;
+  const { cet_number, password, role } = req.body;
 
-    if (!cet_number || !password || !role) {
-        return res.status(400).send({ error: 'CET Number, Password, and Role are required' });
+  if (!cet_number || !password || !role) {
+    return res.status(400).send({ error: 'CET Number, Password, and Role are required' });
+  }
+
+  try {
+    let query = '';
+    let params = [];
+
+    // Select query based on role
+    if (role === 'student') {
+      query = 'SELECT * FROM students WHERE cet_number = ? AND password = ? LIMIT 1';
+      params = [cet_number, password];
+    } else if (role === 'admin') {
+      query = 'SELECT * FROM admins WHERE admin_id = ? AND password = ? LIMIT 1';
+      params = [cet_number, password];
+    } else {
+      return res.status(400).send({ error: 'Invalid role' });
     }
 
-    try {
-        let query = '';
-        let params = [];
+    console.log('Executing query:', query, 'with params:', params);
 
-        // Select query based on role
-        if (role === 'student') {
-            query = 'SELECT * FROM students WHERE cet_number = ? AND password = ? LIMIT 1';
-            params = [cet_number, password];
-        } else if (role === 'admin') {
-            query = 'SELECT * FROM admins WHERE admin_id = ? AND password = ? LIMIT 1';
-            params = [cet_number, password];
-        } else {
-            return res.status(400).send({ error: 'Invalid role' });
-        }
+    const [rows] = await pool.query(query, params);
 
-        console.log('Executing query:', query, 'with params:', params);
-
-        const [rows] = await pool.query(query, params);
-
-        // Check if no rows are returned
-        if (rows.length === 0) {
-            return res.status(401).send({ error: 'Invalid credentials' });
-        }
-
-        const user = rows[0]; // The first matching row
-        res.status(200).send({ message: 'Login successful', user });
-    } catch (error) {
-        console.error('Error during login:', error.message);
-        res.status(500).send({ error: 'Server error. Please try again later.' });
+    // Check if no rows are returned
+    if (rows.length === 0) {
+      return res.status(401).send({ error: 'Invalid credentials' });
     }
+
+    const user = rows[0]; // The first matching row
+
+    // Insert login details into the student_logins table if the role is 'student'
+    if (role === 'student') {
+      const login_time = new Date();
+      const formattedLoginTime = login_time.toISOString().slice(0, 19).replace('T', ' '); // Format to 'YYYY-MM-DD HH:MM:SS'
+
+      // Insert the login info into student_logins table
+      const insertQuery = 'INSERT INTO student_logins (cet_number, login_time) VALUES (?, ?)';
+      await pool.query(insertQuery, [cet_number, formattedLoginTime]);
+      console.log('Login info inserted into student_logins table');
+    }
+
+    // Send the login success response
+    res.status(200).send({ message: 'Login successful', user });
+  } catch (error) {
+    console.error('Error during login:', error.message);
+    res.status(500).send({ error: 'Server error. Please try again later.' });
+  }
 });
+
+// Endpoint to fetch student login data
+app.get('/api/student-logins', async (req, res) => {
+  try {
+      const query = `
+          SELECT student_logins.cet_number, student_logins.login_time, students.name 
+          FROM student_logins
+          INNER JOIN students ON student_logins.cet_number = students.cet_number
+          ORDER BY student_logins.login_time DESC;
+      `;
+      
+      console.log('Executing query: ', query); // Log the query for debugging
+      const [rows] = await pool.query(query);
+
+      if (!rows || rows.length === 0) {
+          return res.status(404).send({ message: 'No student login data found' });
+      }
+
+      console.log('Query Result: ', rows); // Log the rows for debugging
+      res.json(rows);
+  } catch (err) {
+      console.error('Error fetching student login data:', err.message);
+      res.status(500).send({ error: 'Server error. Please try again later.' });
+  }
+});
+
+
+
 
 
 
@@ -109,16 +150,12 @@ app.get('/api/branches', async (req, res) => {
         
         const [results] = await pool.query('SELECT * FROM branches');
         res.json(results);
+        console.log('result:',results);
     } catch (err) {
         console.error('Error fetching branch data:', err);
         res.status(500).json({ error: 'Failed to fetch branch data' });
     }
 });
-
-
-
-
-
 
 // Route to fetch branch data with applied_count
 app.get('/api/branches/withCount', async (req, res) => {
@@ -139,56 +176,89 @@ app.get('/api/branches/withCount', async (req, res) => {
     }
 });
 
-
-
-
 // Store student choices in the database
 // POST: Submit choices
 app.post('/api/submitChoices', async (req, res) => {
-    const { cet_number, choices } = req.body;
-    console.log(req.body);
-    if (!cet_number || !choices || choices.length === 0) {
-        return res.status(400).send({ error: 'CET number and choices are required.' });
-    }
+  const { cet_number, choices } = req.body;
+  console.log('Request received:', req.body);
 
-    try {
-        // Step 1: Validate CET number
-        const [students] = await pool.query('SELECT * FROM students WHERE cet_number = ?', [cet_number]);
-        if (students.length === 0) {
-            return res.status(400).send({ error: 'Invalid CET number' });
-        }
+  if (!cet_number || !choices || choices.length === 0) {
+      return res.status(400).send({ error: 'CET number and choices are required.' });
+  }
 
-        // Step 2: Check if choices are already submitted
-        const [existingChoices] = await pool.query('SELECT * FROM student_choices WHERE cet_number = ?', [cet_number]);
-        if (existingChoices.length > 0) {
-            return res.status(400).send({ error: 'Choices already submitted for this CET number' });
-        }
+  try {
+      // Step 1: Validate CET number and fetch student_id
+      const [students] = await pool.query('SELECT * FROM students WHERE cet_number = ?', [cet_number]);
+      if (students.length === 0) {
+          console.error(`Invalid CET number: ${cet_number}`);
+          return res.status(400).send({ error: 'Invalid CET number' });
+      }
 
-        // Step 3: Insert choices into the database
-        const insertChoices = choices.map((choice, index) => [
-            cet_number,
-            choice.college_name,
-            choice.branch_name,
-            index + 1 // Priority is based on array index (1-based)
-        ]);
+      const student_id = students[0].student_id; // Get student_id from the fetched student record
+      console.log(`Valid CET number. Student ID: ${student_id}`);
 
-        await pool.query(
-            'INSERT INTO student_choices (cet_number, college_name, branch_name, priority) VALUES ?',
-            [insertChoices]
-        );
+      // Step 2: Check if choices are already submitted for the CET number
+      const [existingChoices] = await pool.query('SELECT * FROM student_choices WHERE cet_number = ?', [cet_number]);
+      if (existingChoices.length > 0) {
+          console.error(`Choices already submitted for CET number: ${cet_number}`);
+          return res.status(400).send({ error: 'Choices already submitted for this CET number' });
+      }
 
-        // Step 4: Send success response
-        res.send({ message: 'Choices submitted successfully!' });
-    } catch (err) {
-        console.error('Error submitting choices:', err);
-        res.status(500).send({ error: 'Error submitting choices. Please try again later.' });
-    }
-  //   console.log({
-  //     cet_number: cetNumber,
-  //     choices: submittedChoices,
-  // });
-  
+      // Step 3: Insert choices into the database with student_id
+      const insertChoices = choices.map((choice, index) => [
+          student_id,              // Use the student_id from the fetched student record
+          cet_number,
+          choice.college_name,
+          choice.branch_name,
+          index + 1 // Priority is based on array index (1-based)
+      ]);
+
+      const connection = await pool.getConnection(); // Get a transactional connection
+      await connection.beginTransaction(); // Start a transaction
+
+      try {
+          for (const choice of insertChoices) {
+              const [existing] = await connection.query(
+                  'SELECT * FROM student_choices WHERE student_id = ? AND college_name = ? AND branch_name = ? AND priority = ?',
+                  [choice[0], choice[2], choice[3], choice[4]]
+              );
+
+              if (existing.length === 0) {
+                  // Insert only if the entry does not already exist
+                  await connection.query(
+                      'INSERT INTO student_choices (student_id, cet_number, college_name, branch_name, priority) VALUES (?, ?, ?, ?, ?)',
+                      choice
+                  );
+                  console.log(`Inserted choice: ${JSON.stringify(choice)}`);
+              } else {
+                  console.log(`Duplicate choice detected, skipping: ${JSON.stringify(choice)}`);
+              }
+          }
+
+          // Step 4: Update the choice_submitted status for the student
+          await connection.query(
+              'UPDATE students SET choice_submitted = 1 WHERE student_id = ?',
+              [student_id]
+          );
+          console.log('Choice submitted status updated.');
+
+          await connection.commit(); // Commit the transaction
+          console.log('All choices inserted and status updated successfully.');
+          res.send({ message: 'Choices submitted successfully!' });
+      } catch (err) {
+          await connection.rollback(); // Rollback on error
+          console.error('Error during insertion, rolling back:', err);
+          throw err;
+      } finally {
+          connection.release(); // Release the connection
+      }
+  } catch (err) {
+      console.error('Error submitting choices:', err);
+      res.status(500).send({ error: 'Error submitting choices. Please try again later.' });
+  }
 });
+
+
 
   
   // GET: Fetch choices for a CET number
@@ -229,229 +299,72 @@ app.get('/choices/:cetNumber', async (req, res) => {
 app.get('/api/admin_dashboard',async(req,res) =>{
     
 })
-
-// API to trigger seat allocation
-app.post('/close-choice-entry', async (req, res) => {
-    const connection = await pool.getConnection();
-  
+app.get('/api/admins', async (req, res) => {
     try {
-      await connection.beginTransaction();  // Start the transaction
-      
-      // Query to select students who have submitted their choices and don't have an allocated seat
-      const [students] = await connection.query(`
-        SELECT student_id, rank_number
-        FROM students
-        WHERE choice_submitted = 1 AND allocated_seat IS NULL
-        ORDER BY rank_number ASC
-      `);
-  
-      // Query to select available seats
-      const [seats] = await connection.query(`
-        SELECT SEAT_ID
-        FROM seats
-        WHERE is_allocated = 0
-      `);
-  
-      if (students.length === 0 || seats.length === 0) {
-        return res.status(400).json({ message: 'No students or seats available for allocation.' });
-      }
-  
-      let seatIndex = 0;
-      let studentIndex = 0;
-  
-      // Allocate seats to students based on their rank number
-      while (seatIndex < seats.length && studentIndex < students.length) {
-        const student = students[studentIndex];
-        const seat = seats[seatIndex];
-  
-        // Update the student's allocated seat in the students table
-        await connection.query(`
-          UPDATE students
-          SET allocated_seat = ?
-          WHERE student_id = ?
-        `, [seat.SEAT_ID, student.student_id]);
-  
-        // Update the seat to mark it as allocated and allocate it to the student
-        await connection.query(`
-          UPDATE seats
-          SET is_allocated = 1, allocated_to = ?
-          WHERE SEAT_ID = ?
-        `, [student.student_id, seat.SEAT_ID]);
-  
-        seatIndex++;
-        studentIndex++;
-      }
-  
-      await connection.commit();  // Commit the transaction
-  
-      return res.status(200).json({ message: 'Seats allocated successfully.' });
-  
-    } catch (error) {
-      await connection.rollback();  // Rollback the transaction in case of error
-      console.error(error);
-      return res.status(500).json({ message: 'Error allocating seats.', error });
-    } finally {
-      connection.release();  // Always release the connection
-    }
-  });
-  // Route to process seat allotment
-app.post('/admin/process-seat-allotment', async (req, res) => {
-    try {
-      // Perform the seat allotment logic using a MySQL query
-      const query = `
-        UPDATE seats
-        SET is_allocated = 1, allocated_to = (
-          SELECT student_id FROM students WHERE students.allocated_seat = seats.SEAT_ID
-        )
-        WHERE SEAT_ID IN (SELECT allocated_seat FROM students WHERE allocated_seat IS NOT NULL)
-      `;
-      
-      const [result] = await pool.execute(query);  // Execute the query using the connection pool
-      
-      return res.status(200).json({
-        message: 'Seat allotment processed successfully.',
-      });
+        const query = 'SELECT * FROM admins'; // Replace with your table name
+        const [results] = await pool.query(query);
+        res.json(results);
     } catch (err) {
-      console.error('Error processing seat allotment:', err);
-      return res.status(500).json({
-        message: 'Error processing seat allotment.',
-      });
-    }
-  });
-  
-  // Route to trigger seat allocation
- // Route to trigger seat allocation and perform the allocation logic
-app.post('/admin/trigger-seat-allocation', async (req, res) => {
-    const connection = await pool.getConnection();
-  
-    try {
-      await connection.beginTransaction(); // Start the transaction
-  
-      // Query to select students who have submitted their choices and don't have an allocated seat
-      const [students] = await connection.query(`
-        SELECT student_id, rank_number
-        FROM students
-        WHERE choice_submitted = 1 AND allocated_seat IS NULL
-        ORDER BY rank_number ASC
-      `);
-  
-      // Query to select available seats
-      const [seats] = await connection.query(`
-        SELECT SEAT_ID
-        FROM seats
-        WHERE is_allocated = 0
-      `);
-  
-      if (students.length === 0 || seats.length === 0) {
-        return res.status(400).json({ message: 'No students or seats available for allocation.' });
-      }
-  
-      let seatIndex = 0;
-      let studentIndex = 0;
-  
-      // Allocate seats to students based on their rank number
-      while (seatIndex < seats.length && studentIndex < students.length) {
-        const student = students[studentIndex];
-        const seat = seats[seatIndex];
-  
-        // Update the student's allocated seat in the students table
-        await connection.query(`
-          UPDATE students
-          SET allocated_seat = ?
-          WHERE student_id = ?
-        `, [seat.SEAT_ID, student.student_id]);
-  
-        // Update the seat to mark it as allocated and allocate it to the student
-        await connection.query(`
-          UPDATE seats
-          SET is_allocated = 1, allocated_to = ?
-          WHERE SEAT_ID = ?
-        `, [student.student_id, seat.SEAT_ID]);
-  
-        seatIndex++;
-        studentIndex++;
-      }
-  
-      await connection.commit(); // Commit the transaction
-  
-      return res.status(200).json({ message: 'Seats allocated successfully.' });
-  
-    } catch (error) {
-      await connection.rollback(); // Rollback the transaction in case of error
-      console.error('Error allocating seats:', error);
-      return res.status(500).json({ message: 'Error allocating seats.', error });
-    } finally {
-      connection.release(); // Always release the connection
-    }
-  });
-  
-  
-  
-
-
-app.get('/choiceentry/collegeSeatTable', async (req, res) => {
-    try {
-        const query = 'SELECT * FROM seat_allocation WHERE round = 1'; // Get seat allocation for 1st round
-        const [seatAllocations] = await pool.query(query);
-
-        res.render('collegeSeatTable', { seatAllocations });
-    } catch (error) {
-        console.error('Error fetching seat allocation:', error.message);
-        res.status(500).send({ error: 'Failed to load college seat table' });
+        console.error('Error fetching data:', err);
+        res.status(500).json({ error: 'Failed to fetch admin data' });
     }
 });
 
+app.post('/allocate-seat', async (req, res) => {
+  try {
+      const connection = await pool.getConnection();
+      console.log("Calling stored procedure...");  // Debugging line
+      await connection.query('CALL allocate_seats();');
+      console.log("Stored procedure executed");  // Debugging line
+      connection.release();
+      res.json({ status: 'success', message: 'Seat allocation process triggered.' });
+  } catch (error) {
+      console.error('Error triggering seat allocation:', error);
+      res.status(500).json({ status: 'error', message: 'Failed to trigger seat allocation.' });
+  }
+});
 
+
+
+
+app.get('/allocation-log', async (req, res) => {
+  try {
+      const connection = await pool.getConnection();
+      const [results] = await connection.query(`
+          SELECT 
+              al.student_id, 
+              s.name AS student_name, 
+              al.college_name, 
+              al.branch_name, 
+              al.allocated_at 
+          FROM allocation_log al 
+          JOIN students s ON al.student_id = s.student_id 
+          ORDER BY al.allocated_at ASC
+      `);
+      connection.release(); // Release the connection back to the pool
+      res.status(200).json(results);
+  } catch (error) {
+      console.error('Error fetching allocation logs:', error);
+      res.status(500).send('Failed to fetch allocation logs');
+  }
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admindashboard.html'));
+});
 
 //+=========================================================
-//allocate seats
-app.post('/allocate-seats', async (req, res) => {
-    try {
-        // Fetch students sorted by rank_number
-        const [students] = await pool.query(`
-            SELECT * FROM students ORDER BY rank_number ASC
-        `);
+app.get('/api/logins', async (req, res) => {
+  const query = 'SELECT cetnumber, login_time FROM student_logins ORDER BY login_time DESC';
 
-        // Fetch available seats
-        const [seats] = await pool.query(`
-            SELECT * FROM seats WHERE is_allocated = 0
-        `);
-
-        if (students.length === 0 || seats.length === 0) {
-            return res.status(400).json({ message: "No students or seats available for allocation." });
-        }
-
-        // Allocate seats
-        let seatIndex = 0;
-        for (const student of students) {
-            if (seatIndex >= seats.length) break;
-
-            const seat = seats[seatIndex];
-
-            // Update the seat as allocated
-            await pool.query(`
-                UPDATE seats
-                SET is_allocated = 1, allocated_to = ?
-                WHERE id = ?
-            `, [student.id, seat.id]);
-
-            // Update the student with allocated seat
-            await pool.query(`
-                UPDATE students
-                SET allocated_seat = ?
-                WHERE id = ?
-            `, [seat.id, student.id]);
-
-            seatIndex++;
-        }
-
-        res.status(200).json({ message: "Seats allocated successfully!" });
-    } catch (error) {
-        console.error("Error allocating seats:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
+  try {
+    const [rows] = await pool.query(query);  // Using the connection pool to execute the query
+    res.json(rows);  // Return the results as JSON
+  } catch (err) {
+    console.error('Error fetching login details:', err);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
-
 
 // Start server
 const PORT = 1234;

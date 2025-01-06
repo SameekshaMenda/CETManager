@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-50 font-sans">
+
+<div class="container mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-blue-600 text-white py-8 px-10 rounded-3xl shadow-lg text-center">
+        <h1 class="text-4xl font-semibold">Admin Dashboard</h1>
+    </div>
+
+    <!-- Allocate Seats Button -->
+    <div class="text-center my-8">
+        <button class="bg-blue-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300" onclick="allocateSeats()">
+            Start Seat Allocation
+        </button>
+    </div>
+
+    <!-- Allocation Log -->
+    <div class="log-container mt-16">
+        <h2 class="text-2xl font-semibold text-blue-600 mb-6">Seat Allocation Log</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead class="bg-blue-100 text-blue-700">
+                <tr>
+                    <th class="py-3 px-4 text-left">Student Name</th>
+                    <th class="py-3 px-4 text-left">College Name</th>
+                    <th class="py-3 px-4 text-left">Branch Name</th>
+                    <th class="py-3 px-4 text-left">Allocation Date</th>
+                </tr>
+            </thead>
+            <tbody id="allocation-log">
+                <!-- Log data will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Function to trigger seat allocation in the database
+    function allocateSeats() {
+        fetch('http://localhost:1234/allocate-seat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Seat allocation process completed successfully.');
+                // Fetch the updated allocation log
+                fetchAllocationLog();
+            } else {
+                alert(data.message || 'Failed to start seat allocation.');
+            }
+        })
+        .catch(error => {
+            console.error('Error during seat allocation:', error);
+            alert('Failed to start seat allocation.');
+        });
+    }
+
+    // Function to fetch and display the allocation log
+    function fetchAllocationLog() {
+        fetch('http://localhost:1234/allocation-log')
+            .then(response => response.json())
+            .then(data => {
+                const logTable = document.getElementById('allocation-log');
+                logTable.innerHTML = ''; // Clear previous logs
+
+                data.forEach(log => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="py-2 px-4">${log.student_name}</td>
+                        <td class="py-2 px-4">${log.college_name}</td>
+                        <td class="py-2 px-4">${log.branch_name}</td>
+                        <td class="py-2 px-4">${log.allocated_at}</td>
+                    `;
+                    logTable.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching allocation logs:', error);
+            });
+    }
+
+    // Load allocation logs when the page loads
+    window.onload = function() {
+        fetchAllocationLog();
+    };
+</script>
+
+</body>
+</html>

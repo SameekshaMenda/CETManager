@@ -21,6 +21,7 @@
                         <th class="border border-gray-300 px-8 py-4">Branch Name</th>
                         <th class="border border-gray-300 px-8 py-4">College Name</th>
                         <th class="border border-gray-300 px-8 py-4">Applied Count</th>
+                        <th class="border border-gray-300 px-8 py-4">Number of Branches</th> <!-- New Column -->
                     </tr>
                 </thead>
                 <tbody id="branchesTable" class="text-gray-600">
@@ -67,12 +68,23 @@
             try {
                 const response = await axios.get('/api/branches/withCount');
                 branches = response.data;
+
+                // Group by College Name to count the number of branches
+                const branchCounts = branches.reduce((acc, branch) => {
+                    if (!acc[branch.college_name]) {
+                        acc[branch.college_name] = 0;
+                    }
+                    acc[branch.college_name]++;
+                    return acc;
+                }, {});
+
                 const branchesTable = document.getElementById('branchesTable');
-                branchesTable.innerHTML = branches.map(branch => ` 
+                branchesTable.innerHTML = branches.map(branch => `
                     <tr class="hover:bg-blue-50">
                         <td class="border border-gray-300 px-8 py-4 text-xl">${branch.branch_name}</td>
                         <td class="border border-gray-300 px-8 py-4 text-xl">${branch.college_name}</td>
                         <td class="border border-gray-300 px-8 py-4 text-xl">${branch.applied_count}</td>
+                        <td class="border border-gray-300 px-8 py-4 text-xl">${branchCounts[branch.college_name]}</td>
                     </tr>
                 `).join('');
             } catch (error) {

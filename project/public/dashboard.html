@@ -20,7 +20,7 @@
             font-size: 1rem;
         }
 
-        /* Ensuring the page takes up full screen */
+        /* Sidebar styling */
         .sidebar {
             position: fixed;
             top: 0;
@@ -30,6 +30,7 @@
             background-color: #1e40af;
             transition: all 0.3s ease;
             z-index: 1000;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
         }
 
         .sidebar .close-btn {
@@ -44,12 +45,17 @@
         .sidebar .nav-link {
             color: #fff;
             font-size: 1.25rem;
+            padding: 12px 20px;
+            display: block;
+            transition: background-color 0.3s ease;
         }
 
         .sidebar .nav-link:hover {
             background-color: #3b82f6;
+            border-radius: 8px;
         }
 
+        /* Content area styling */
         .content-area {
             margin-left: 250px;
             padding: 20px;
@@ -68,6 +74,9 @@
         .navbar {
             z-index: 1001;
             font-size: 1.25rem;
+            padding: 1rem 2rem;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         /* Styling for dashboard cards */
@@ -75,6 +84,41 @@
             margin-bottom: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #f3f4f6;
+            padding: 1.25rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Button styling */
+        .btn {
+            background-color: #3b82f6;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
         }
 
         /* Ensure responsiveness for small screens */
@@ -89,11 +133,17 @@
 
             .navbar {
                 font-size: 1.1rem;
+                padding: 1rem;
             }
 
             .btn {
                 font-size: 1rem;
                 padding: 8px 16px;
+            }
+
+            .content-area {
+                margin-left: 0;
+                padding: 10px;
             }
         }
     </style>
@@ -102,8 +152,8 @@
 
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar p-4">
-        <button id="closeSidebar" class="close-btn">×</button>
-        <h2 class="text-3xl text-white mb-6">KCET</h2>
+        <button id="closeSidebar" class="close-btn text-white hover:text-gray-300 text-2xl">×</button>
+        <h2 class="text-3xl text-white mb-6 font-bold">KCET</h2>
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="profile.html">Profile</a>
@@ -117,6 +167,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="#">About Us</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://localhost:1234" id="logout">Logout</a>
+            </li>
         </ul>
     </div>
 
@@ -126,64 +179,64 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-lg fixed-top">
             <div class="container-fluid">
                 <button class="btn btn-primary" id="openSidebarBtn">☰</button>
-                <h1 class="navbar-brand ms-3">KCET Dashboard</h1>
+                <h1 class="navbar-brand ms-3 text-xl font-semibold">KCET Dashboard</h1>
             </div>
         </nav>
 
         <!-- Dashboard Content -->
-        <div class="container mt-5 pt-5">
+        <div class="container mt-24 pt-5">
             <h2 class="text-4xl font-bold text-blue-600 mb-4">About KCET</h2>
-            <p class="text-lg text-gray-700">The Karnataka Common Entrance Test (KCET) is an entrance examination for students seeking admission to various professional courses in Karnataka. KCET is conducted by the Karnataka Examination Authority (KEA) and is one of the most important exams for students aspiring to pursue undergraduate studies in fields like Engineering, Medicine, and Agriculture in the state of Karnataka.</p>
+            <p class="text-lg text-gray-700 mb-6">The Karnataka Common Entrance Test (KCET) is an entrance examination for students seeking admission to various professional courses in Karnataka. KCET is conducted by the Karnataka Examination Authority (KEA) and is one of the most important exams for students aspiring to pursue undergraduate studies in fields like Engineering, Medicine, and Agriculture in the state of Karnataka.</p>
 
             <!-- Dashboard Statistics Section -->
             <div class="row">
                 <!-- Total Applications -->
                 <div class="col-md-4">
-                    <div class="card bg-primary text-white p-4">
-                        <h5>Total Applications</h5>
-                        <h3 class="display-4">12,345</h3>
+                    <div class="card bg-blue-500 text-white p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Total Applications</h5>
+                        <h3 class="display-4 text-3xl font-bold">12,345</h3>
                     </div>
                 </div>
                 <!-- Seats Available -->
                 <div class="col-md-4">
-                    <div class="card bg-success text-white p-4">
-                        <h5>Seats Available</h5>
-                        <h3 class="display-4">1,250</h3>
+                    <div class="card bg-green-500 text-white p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Seats Available</h5>
+                        <h3 class="display-4 text-3xl font-bold">1,250</h3>
                     </div>
                 </div>
                 <!-- Total Colleges -->
                 <div class="col-md-4">
-                    <div class="card bg-warning text-white p-4">
-                        <h5>Total Colleges</h5>
-                        <h3 class="display-4">50+</h3>
+                    <div class="card bg-yellow-500 text-white p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Total Colleges</h5>
+                        <h3 class="display-4 text-3xl font-bold">50+</h3>
                     </div>
                 </div>
             </div>
 
             <!-- Charts Section -->
-            <div class="row mt-5">
+            <div class="row mt-6">
                 <!-- Application Trends Chart -->
                 <div class="col-md-6">
-                    <div class="card p-4">
-                        <h5>Application Trends</h5>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Application Trends</h5>
                         <canvas id="applicationTrends"></canvas>
                     </div>
                 </div>
                 <!-- Seat Availability Trends -->
                 <div class="col-md-6">
-                    <div class="card p-4">
-                        <h5>Seat Availability Trends</h5>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Seat Availability Trends</h5>
                         <canvas id="seatAvailabilityTrends"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- Key Insights Section -->
-            <div class="row mt-5">
+            <div class="row mt-6">
                 <div class="col-md-12">
-                    <div class="card p-4">
-                        <h5>Key Insights</h5>
-                        <ul class="list-group">
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Key Insights</h5>
+                        <ul class="list-group list-group-flush">
                             <li class="list-group-item">KCET opens doors to top universities in Karnataka.</li>
                             <li class="list-group-item">Over 1,200 seats available across various professional courses.</li>
                             <li class="list-group-item">Transparent and fair examination process ensuring equal opportunities for all candidates.</li>
@@ -194,10 +247,10 @@
             </div>
 
             <!-- Detailed Information Section -->
-            <div class="row mt-5">
+            <div class="row mt-6">
                 <div class="col-md-12">
-                    <div class="card p-4">
-                        <h5>Additional Information</h5>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h5 class="text-lg font-semibold">Additional Information</h5>
                         <p class="text-lg text-gray-700">KCET offers multiple opportunities for candidates to choose from a wide variety of courses across various domains such as Engineering, Medicine, Agriculture, and many others. The examination is designed to ensure a level playing field for all applicants with robust measures in place for fairness and transparency.</p>
                     </div>
                 </div>
