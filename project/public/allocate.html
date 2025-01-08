@@ -14,14 +14,14 @@
         <h1 class="text-4xl font-semibold">Admin Dashboard</h1>
     </div>
 
-    <!-- Allocate Seats Button -->
+    <!-- Allocate All Seats Button -->
     <div class="text-center my-8">
-        <button class="bg-blue-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300" onclick="allocateSeats()">
-            Start Seat Allocation
+        <button class="bg-blue-600 text-white py-3 px-6 rounded-lg shadow-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300" onclick="allocateAllSeats()">
+            Allocate All Seats
         </button>
     </div>
 
-    <!-- Allocation Log -->
+    <!-- Allocation Log Table -->
     <div class="log-container mt-16">
         <h2 class="text-2xl font-semibold text-blue-600 mb-6">Seat Allocation Log</h2>
         <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
@@ -41,27 +41,27 @@
 </div>
 
 <script>
-    // Function to trigger seat allocation in the database
-    function allocateSeats() {
-        fetch('http://localhost:1234/allocate-seat', {
+    // Function to allocate all seats from allocation log to final_allocate table
+    function allocateAllSeats() {
+        fetch('http://localhost:1234/allocate-all-seats', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            },
+            }
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert('Seat allocation process completed successfully.');
-                // Fetch the updated allocation log
+                alert('Seats allocated successfully for all logs.');
+                // Fetch the updated allocation log after the allocation
                 fetchAllocationLog();
             } else {
-                alert(data.message || 'Failed to start seat allocation.');
+                alert(data.message || 'Failed to allocate seats.');
             }
         })
         .catch(error => {
             console.error('Error during seat allocation:', error);
-            alert('Failed to start seat allocation.');
+            alert('Failed to allocate seats.');
         });
     }
 
@@ -79,7 +79,7 @@
                         <td class="py-2 px-4">${log.student_name}</td>
                         <td class="py-2 px-4">${log.college_name}</td>
                         <td class="py-2 px-4">${log.branch_name}</td>
-                        <td class="py-2 px-4">${log.allocated_at}</td>
+                        <td class="py-2 px-4">${log.allocation_date}</td>
                     `;
                     logTable.appendChild(row);
                 });

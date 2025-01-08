@@ -79,7 +79,7 @@
                 }, {});
 
                 const branchesTable = document.getElementById('branchesTable');
-                branchesTable.innerHTML = branches.map(branch => `
+                branchesTable.innerHTML = branches.map(branch => ` 
                     <tr class="hover:bg-blue-50">
                         <td class="border border-gray-300 px-8 py-4 text-xl">${branch.branch_name}</td>
                         <td class="border border-gray-300 px-8 py-4 text-xl">${branch.college_name}</td>
@@ -170,7 +170,6 @@
                 });
                 alert('Choices submitted successfully!');
                 window.location.href = `/submittedPage.html?cetNumber=${cetNumber}`;
-                // location.reload();
             } catch (error) {
                 console.error('Error submitting choices:', error);
                 alert(`Failed to submit choices: ${error.response?.data?.error || 'Please try again later.'}`);

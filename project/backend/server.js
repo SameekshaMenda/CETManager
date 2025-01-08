@@ -311,43 +311,184 @@ app.get('/api/admins', async (req, res) => {
 });
 
 app.post('/allocate-seat', async (req, res) => {
+  // Extract allocation data from the client request body
+  const allocationData = req.body;
+
+  // Log the received allocation data for debugging
+  console.log('Received allocation data:', allocationData);
+
+  // Validate if all required fields are present
+  if (!allocationData.student_id || !allocationData.student_name || !allocationData.college_name || !allocationData.branch_name) {
+    return res.status(400).json({ status: 'error', message: 'Missing required fields in allocation data' });
+  }
+
+  const connection = await pool.getConnection();
+
   try {
-      const connection = await pool.getConnection();
-      console.log("Calling stored procedure...");  // Debugging line
-      await connection.query('CALL allocate_seats();');
-      console.log("Stored procedure executed");  // Debugging line
-      connection.release();
-      res.json({ status: 'success', message: 'Seat allocation process triggered.' });
-  } catch (error) {
-      console.error('Error triggering seat allocation:', error);
-      res.status(500).json({ status: 'error', message: 'Failed to trigger seat allocation.' });
+    // Start transaction
+    await connection.beginTransaction();
+
+    // Insert into final_allocate table
+    const insertQuery = `INSERT INTO final_allocate (student_id, student_name, college_name, branch_name, allocation_date)
+                         VALUES (?, ?, ?, ?, NOW())`;
+
+    await connection.execute(insertQuery, [
+      allocationData.student_id,
+      allocationData.student_name,
+      allocationData.college_name,
+      allocationData.branch_name
+    ]);
+
+    // Update the branches table by deducting available seats
+    const updateQuery = `UPDATE branches SET available_seats = available_seats - 1 WHERE college_name = ? AND branch_name = ? AND available_seats > 0`;
+    const [updateResult] = await connection.execute(updateQuery, [
+      allocationData.college_name,
+      allocationData.branch_name
+    ]);
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error(`No available seats for ${allocationData.college_name} - ${allocationData.branch_name}`);
+    }
+
+    // Commit transaction
+    await connection.commit();
+    res.json({ status: 'success' });
+  } catch (err) {
+    // If any error occurs, rollback the transaction
+    await connection.rollback();
+    console.error('Error during seat allocation:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  } finally {
+    // Release the connection back to the pool
+    connection.release();
   }
 });
 
+app.post('/allocate-all-seats', async (req, res) => {
+  const connection = await pool.getConnection();
 
+  try {
+    // Start transaction
+    await connection.beginTransaction();
+
+    // Step 1: Fetch all allocation logs
+    const [logs] = await connection.execute(`
+      SELECT 
+          al.student_id,  -- Prefix student_id with table alias
+          s.name AS student_name,  -- Use "name" from the students table instead of "student_name"
+          al.college_name, 
+          al.branch_name
+      FROM allocation_log al
+      JOIN students s ON al.student_id = s.student_id  -- Join with students table to get name
+    `);
+
+    // Step 2: Insert the fetched logs into final_allocate
+    for (let log of logs) {
+      const insertQuery = `
+        INSERT INTO final_allocate (student_id, student_name, college_name, branch_name, allocation_date)
+        VALUES (?, ?, ?, ?, NOW())
+      `;
+      await connection.execute(insertQuery, [
+        log.student_id,
+        log.student_name,
+        log.college_name,
+        log.branch_name
+      ]);
+    }
+
+    // Step 3: Update the branches table to deduct available seats
+    for (let log of logs) {
+      const updateQuery = `
+        UPDATE branches SET available_seats = available_seats - 1
+        WHERE college_name = ? AND branch_name = ? AND available_seats > 0
+      `;
+      await connection.execute(updateQuery, [
+        log.college_name,
+        log.branch_name
+      ]);
+    }
+
+    // Commit transaction
+    await connection.commit();
+    res.json({ status: 'success', message: 'Seats allocated successfully for all logs.' });
+
+  } catch (err) {
+    // If any error occurs, rollback the transaction
+    await connection.rollback();
+    console.error('Error during seat allocation:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  } finally {
+    // Release the connection back to the pool
+    connection.release();
+  }
+});
 
 
 app.get('/allocation-log', async (req, res) => {
+  const connection = await pool.getConnection();
+
   try {
-      const connection = await pool.getConnection();
-      const [results] = await connection.query(`
+      // Query to join allocation_log and students table using student_id
+      const [results] = await connection.execute(`
           SELECT 
               al.student_id, 
-              s.name AS student_name, 
+              s.name AS student_name,  -- Select student_name from students table
               al.college_name, 
               al.branch_name, 
-              al.allocated_at 
-          FROM allocation_log al 
-          JOIN students s ON al.student_id = s.student_id 
-          ORDER BY al.allocated_at ASC
+              al.allocation_date 
+          FROM allocation_log al
+          JOIN students s ON al.student_id = s.student_id  -- Join using student_id
+          ORDER BY al.allocation_date DESC
       `);
-      connection.release(); // Release the connection back to the pool
+
       res.status(200).json(results);
-  } catch (error) {
-      console.error('Error fetching allocation logs:', error);
-      res.status(500).send('Failed to fetch allocation logs');
+  } catch (err) {
+      console.error('Error fetching allocation logs:', err);
+      res.status(500).send('Error fetching allocation logs');
+  } finally {
+      // Release the connection back to the pool
+      connection.release();
   }
 });
+
+
+
+
+
+// app.get('/allocation-log', async (req, res) => {
+//   const connection = await pool.getConnection();
+
+//   try {
+//       // Debug log: start the allocation log fetch
+//       console.log("Fetching allocation log...");
+
+//       // Query to join final_allocate and students table
+//       const [results] = await connection.execute(`
+//           SELECT 
+//               fa.student_id, 
+//               s.name AS student_name, 
+//               fa.college_name, 
+//               fa.branch_name, 
+//               fa.allocation_date 
+//           FROM final_allocate fa
+//           JOIN students s ON fa.student_id = s.student_id
+//           ORDER BY fa.allocation_date DESC
+//       `);
+
+//       // Debug log: check the fetched results
+//       console.log("Allocation log results:", results);
+
+//       res.status(200).json(results);
+//   } catch (err) {
+//       console.error('Error fetching allocation logs:', err);
+//       res.status(500).send('Error fetching allocation logs');
+//   } finally {
+//       // Release the connection back to the pool
+//       connection.release();
+//   }
+// });
+
+
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admindashboard.html'));
