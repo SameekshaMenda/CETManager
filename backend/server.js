@@ -462,6 +462,52 @@ app.get('/allocation-log', async (req, res) => {
 });
 
 
+app.get('/allocation-details/:cet_number', async (req, res) => {
+  const connection = await pool.getConnection();
+  const { cet_number } = req.params;
+
+  try {
+    // Query to fetch allocation details using cet_number
+    const [results] = await connection.execute(
+      `
+      SELECT 
+          fa.student_id, 
+          fa.student_name, 
+          fa.college_name, 
+          fa.branch_name, 
+          fa.allocation_date
+      FROM final_allocate fa
+      JOIN students s ON fa.student_id = s.student_id
+      WHERE s.cet_number = ?
+      `,
+      [cet_number] // Using cet_number instead of student_id
+    );
+
+    if (results.length > 0) {
+      res.status(200).json({
+        status: 'success',
+        message: 'Allocation details retrieved successfully.',
+        data: results[0], // Send only the first result since cet_number should be unique
+      });
+    } else {
+      res.status(404).json({
+        status: 'error',
+        message: 'No allocation found for the given CET number.',
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching allocation details:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'An error occurred while fetching allocation details.',
+    });
+  } finally {
+    // Release the connection back to the pool
+    connection.release();
+  }
+});
+
+
 
 
 

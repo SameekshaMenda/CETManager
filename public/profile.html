@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Profile | KCET</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- Font Awesome -->
     <style>
-        /* Additional custom styles if needed */
+        /* Additional custom styles */
         .profile-container {
             max-width: 700px;
             margin: 100px auto;
@@ -24,16 +25,26 @@
     <!-- Navbar -->
     <nav class="bg-blue-600 text-white shadow-lg fixed top-0 left-0 w-full z-50">
         <div class="container mx-auto flex justify-between items-center py-4 px-6">
-            <!-- <a href="dashboard.html" class="text-3xl font-semibold navbar-link text-white hover:text-gray-200">KCET Dashboard</a> -->
-            <div class="ml-auto">
-                <a href="dashboard.html" class="px-6 py-2 text-lg font-medium hover:bg-blue-700 rounded-md">Dashboard</a>
+            <!-- Home Icon -->
+            <!-- <div class="flex items-center space-x-4">
+                <a href="home.html" class="text-3xl font-semibold hover:text-gray-200">
+                    <i class="fas fa-home"></i>  Font Awesome Home Icon 
+                </a>
+                <span class="text-2xl font-semibold">Student Profile</span>
+            </div> -->
+
+            <!-- Navbar Links -->
+            <div class="ml-auto flex items-center space-x-6">
+                <a href="dashboard.html" class="px-6 py-2 text-lg font-medium hover:bg-blue-700 rounded-md transition-all">Home</a>
+                <a href="profile.html" class="px-6 py-2 text-lg font-medium hover:bg-blue-700 rounded-md transition-all">Profile</a>
+                <a href="index.html" class="px-6 py-2 text-lg font-medium hover:bg-blue-700 hover:text-white rounded-md transition-all">Logout</a>
             </div>
         </div>
     </nav>
 
     <!-- Profile Container -->
     <div class="profile-container mt-24">
-        <h2 class="text-center text-3xl font-bold text-gray-800 mb-6">Student Profile</h2>
+        <h2 class="text-center text-3xl font-bold text-blue-800 mb-6">Student Profile</h2>
 
         <!-- Profile Details Section -->
         <div id="profileDetails" class="space-y-6">
@@ -42,6 +53,9 @@
                 <p class="text-lg"><strong class="font-medium">Name:</strong> <span id="studentName" class="text-gray-600">Loading...</span></p>
                 <p class="text-lg"><strong class="font-medium">CET Number:</strong> <span id="studentCETNumber" class="text-gray-600">Loading...</span></p>
                 <p class="text-lg"><strong class="font-medium">Rank Number:</strong> <span id="studentRankNumber" class="text-gray-600">Loading...</span></p>
+                <p class="text-lg"><strong class="font-medium">College:</strong> <span id="studentCollege" class="text-gray-600">Loading...</span></p>
+                <p class="text-lg"><strong class="font-medium">Branch:</strong> <span id="studentBranch" class="text-gray-600">Loading...</span></p>
+                <p class="text-lg"><strong class="font-medium">Allocation Date:</strong> <span id="allocationDate" class="text-gray-600">Loading...</span></p>
             </div>
         </div>
 
@@ -63,28 +77,47 @@
             }
 
             try {
-                // Send CET number to the server to fetch student details
-                const response = await fetch('/profile', {
+                // Step 1: Fetch profile details using CET number
+                const profileResponse = await fetch('/profile', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ cet_number: cetNumber }) // Send CET number to the server
+                    body: JSON.stringify({ cet_number: cetNumber })
                 });
 
-                const result = await response.json();
+                const profileResult = await profileResponse.json();
 
-                if (response.status === 200) {
-                    // Success: Display student data
-                    const student = result.student;
+                if (profileResponse.status === 200) {
+                    // Success: Display basic student profile data
+                    const student = profileResult.student;
                     document.getElementById('studentName').textContent = student.name;
                     document.getElementById('studentCETNumber').textContent = student.cet_number;
                     document.getElementById('studentRankNumber').textContent = student.rank_number;
                     document.getElementById('errorMessage').style.display = 'none';
+
+                    // Step 2: Fetch allocation details using CET number
+                    const allocationResponse = await fetch(`/allocation-details/${cetNumber}`, {
+                        method: 'GET',
+                    });
+
+                    const allocationResult = await allocationResponse.json();
+
+                    if (allocationResponse.status === 200) {
+                        // Success: Display allocation details
+                        const allocation = allocationResult.data;
+                        document.getElementById('studentCollege').textContent = allocation.college_name || 'N/A';
+                        document.getElementById('studentBranch').textContent = allocation.branch_name || 'N/A';
+                        document.getElementById('allocationDate').textContent = allocation.allocation_date || 'N/A';
+                    } else {
+                        // Handle case where allocation details are not found
+                        document.getElementById('errorMessage').style.display = 'block';
+                        document.getElementById('errorText').textContent = allocationResult.message || 'Allocation details not found';
+                    }
                 } else {
-                    // Handle case where student is not found
+                    // Handle case where profile is not found
                     document.getElementById('errorMessage').style.display = 'block';
-                    document.getElementById('errorText').textContent = result.message || 'Student not found';
+                    document.getElementById('errorText').textContent = profileResult.message || 'Student not found';
                 }
             } catch (error) {
                 console.error('Error fetching student details:', error);
