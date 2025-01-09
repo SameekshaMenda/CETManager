@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Seats</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white font-sans leading-normal tracking-normal">
+  <!-- Sidebar -->
+  <div class="flex">
+    <div class="w-64 bg-gray-800 text-white h-screen p-6">
+      <h2 class="text-2xl font-semibold mb-6">Available Seats</h2>
+      <ul>
+        <li><a href="admindashboard.html" class="block py-2 text-gray-300 hover:text-white">Home</a></li>
+        <li><a href="#" class="block py-2 text-gray-300 hover:text-white">Available Seats</a></li>
+        <li><a href="#" class="block py-2 text-gray-300 hover:text-white">Branch Details</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1">
+      <!-- Navbar -->
+      <nav class="bg-blue-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="flex justify-between items-center py-4">
+            <a href="#" class="text-white font-bold text-lg">view the current status of the seats available</a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Available Seats Section -->
+      <section id="availableSeatsSection" class="mt-8 px-4">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="text-2xl font-semibold text-blue-600 mb-6">Available Seats</h2>
+          <div class="overflow-hidden border rounded-lg shadow-lg bg-white">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-blue-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Seats</th>
+                </tr>
+              </thead>
+              <tbody id="branchesTableBody" class="bg-white divide-y divide-gray-200">
+                <!-- Dynamic Rows Will Be Inserted Here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Fetch the available seats data from the server
+    async function fetchAvailableSeats() {
+      try {
+        const response = await fetch('http://localhost:1234/api/branches', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch branches data: ${response.statusText}`);
+        }
+
+        const branchesData = await response.json();
+
+        if (!Array.isArray(branchesData) || branchesData.length === 0) {
+          throw new Error('Branches data is empty or not in the expected format.');
+        }
+
+        console.log(branchesData); // Debug: Log the response data to check its structure
+        displayAvailableSeats(branchesData);
+      } catch (err) {
+        const branchesTableBody = document.getElementById('branchesTableBody');
+        branchesTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-red-600">${err.message}</td></tr>`;
+      }
+    }
+
+    // Display the available seats in the table
+    function displayAvailableSeats(branchesData) {
+      const branchesTableBody = document.getElementById('branchesTableBody');
+      branchesTableBody.innerHTML = ''; // Clear any previous data
+
+      branchesData.forEach(branch => {
+        const row = document.createElement('tr');
+        row.classList.add('border-t');
+
+        row.innerHTML = `
+          <td class="px-6 py-3 text-left text-sm font-medium text-gray-900">${branch.college_name}</td>
+          <td class="px-6 py-3 text-left text-sm text-gray-900">${branch.branch_name}</td>
+          <td class="px-6 py-3 text-left text-sm text-gray-900">${branch.available_seats}</td>
+        `;
+        branchesTableBody.appendChild(row);
+      });
+    }
+
+    // Initially fetch the available seats data
+    fetchAvailableSeats();
+  </script>
+</body>
+
+</html>

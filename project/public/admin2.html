@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Customize the layout for the left sidebar */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #1f2937;
+            position: fixed;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-item {
+            padding: 15px 20px;
+            color: white;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar .nav-item:hover {
+            background-color: #4b5563;
+        }
+
+        .sidebar .active-nav-item {
+            background-color: #4b5563;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding-top: 20px;
+            transition: margin-left 0.3s;
+        }
+
+        /* Responsive behavior for small screens */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .content {
+                margin-left: 200px;
+            }
+
+            .sidebar .nav-item {
+                font-size: 14px;
+            }
+        }
+
+        /* Adjustments for mobile view */
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Sidebar and Content Wrapper -->
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="sidebar flex flex-col">
+            <div class="p-5 text-white text-2xl font-semibold">Admin Dashboard</div>
+            <div id="navItems">
+                <div class="nav-item active-nav-item" id="allocationNav">Allocation</div>
+                <div class="nav-item" id="availableSeatsNav">Available Seats</div>
+                <div class="nav-item" id="statusNav">Status</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content w-full p-10 space-y-10">
+
+            <!-- Header Section -->
+            <header class="flex justify-between items-center bg-blue-600 text-white p-5 rounded-lg shadow-xl">
+                <h1 class="text-4xl font-extrabold">Admin Dashboard</h1>
+                <button id="logoutButton" class="px-6 py-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition">Logout</button>
+            </header>
+
+            <!-- Admin Data Section -->
+            <section class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-4">Admin Data</h2>
+                <div id="adminData" class="space-y-4">
+                    <!-- Admin data will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-4">Student Login Stats</h2>
+                <div class="flex justify-between items-center">
+                    <div class="text-lg">
+                        <strong>Total Students Logged In:</strong>
+                        <span id="studentCount" class="text-blue-600">0</span>
+                    </div>
+                    <button id="allocateButton" class="px-6 py-3 bg-green-500 text-white rounded-full shadow-lg hover:bg-green-600 transition">Trigger Allocation</button>
+                </div>
+            </section>
+
+            <!-- Allocation Section -->
+            <section id="allocationSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-2xl font-bold mb-4">Allocation Process</h2>
+                <p class="text-lg">Initiate the allocation process for the students logged in.</p>
+                <button id="startAllocation" class="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition">Start Allocation</button>
+                <div id="allocationStatus" class="mt-4 hidden text-green-600">Allocation is in progress...</div>
+            </section>
+
+            <!-- Available Seats Section -->
+            <!-- Available Seats Section -->
+<section id="availableSeatsSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+    <h2 class="text-2xl font-bold mb-4">Available Seats</h2>
+    <p class="text-lg mb-4">Number of available seats for students in each branch.</p>
+    <table id="branchesTable" class="min-w-full bg-white border rounded-lg">
+        <thead class="bg-gray-200">
+            <tr>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">College</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">Branch</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">Seats</th>
+            </tr>
+        </thead>
+        <tbody id="branchesTableBody">
+            <!-- Rows will be dynamically added here -->
+        </tbody>
+    </table>
+</section>
+
+
+            <!-- Status Section -->
+            <section id="statusSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-2xl font-bold mb-4">Current Status</h2>
+                <p class="text-lg">Current status of the system.</p>
+                <div id="currentStatus" class="text-blue-600">System is active</div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Fetch the logged-in admin data from the server
+        async function fetchLoggedInAdminData() {
+            try {
+                const response = await fetch('http://localhost:1234/api/admins', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch admin data: ${response.statusText}`);
+                }
+    
+                const adminData = await response.json();
+    
+                if (!Array.isArray(adminData) || adminData.length === 0) {
+                    throw new Error('Admin data is empty or not in the expected format.');
+                }
+    
+                console.log(adminData); // Debug: Log the response data to check its structure
+                displayAdminData(adminData[0]); // Assuming we want to display the first admin in the list
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                alert('Error fetching admin data. Please try again later.');
+            }
+        }
+    
+        // Display logged-in admin data
+        function displayAdminData(adminData) {
+            const adminDataContainer = document.getElementById('adminData');
+            adminDataContainer.innerHTML = ''; // Clear any previous data
+    
+            if (adminData && adminData.username && adminData.admin_id) {
+                const adminDiv = document.createElement('div');
+                adminDiv.classList.add('p-4', 'border', 'border-gray-300', 'rounded-lg');
+                adminDiv.innerHTML = `
+                    <h3 class="text-xl font-semibold">${adminData.username}</h3>
+                    <p><strong>Admin ID:</strong> ${adminData.admin_id}</p>
+                    <p><strong>Email:</strong> ${adminData.email || 'N/A'}</p>
+                    <p><strong>Role:</strong> ${adminData.role || 'N/A'}</p>
+                    <p><strong>Status:</strong> ${adminData.status || 'N/A'}</p>
+                    <p><strong>Last Login:</strong> ${adminData.last_login ? new Date(adminData.last_login).toLocaleString() : 'N/A'}</p>
+                    <img src="${adminData.profile_picture_url || 'placeholder.jpg'}" 
+                         alt="${adminData.username}'s profile picture" 
+                         class="mt-2 rounded-full h-24 w-24">
+                `;
+                adminDataContainer.appendChild(adminDiv);
+            } else {
+                adminDataContainer.innerHTML = '<p class="text-red-600">Admin data is incomplete or unavailable.</p>';
+            }
+        }
+    
+        // Fetch the student login data
+        async function fetchStudentLogins() {
+    try {
+        // Fetching student login data from the server
+        const response = await fetch('http://localhost:1234/api/student-logins');
+        
+        // If response is not ok, throw an error
+        if (!response.ok) {
+            throw new Error('Failed to fetch data');
+        }
+        
+        // Parsing the response data as JSON
+        const studentLogins = await response.json();
+        
+        // Ensure the DOM element exists before manipulating it
+        const container = document.getElementById('studentLoginsContainer');
+        
+        // Check if the container exists
+        if (container) {
+            // Update the innerHTML with the student login data (or a placeholder for testing)
+            container.innerHTML = JSON.stringify(studentLogins);
+        } else {
+            console.error("Element not found: studentLoginsContainer");
+        }
+        
+    } catch (err) {
+        // Log any errors to the console
+        console.error('Fetch Error:', err);
+        const container = document.getElementById('studentLoginsContainer');
+        if (container) {
+            container.innerHTML = "Error fetching student login data. Please try again later.";
+        }
+    }
+}
+
+    
+        // Display student login data
+        function displayStudentLogins(studentLogins) {
+            const studentLoginsContainer = document.getElementById('studentLoginsContainer');
+            studentLoginsContainer.innerHTML = ''; // Clear any previous data
+    
+            if (studentLogins && studentLogins.length > 0) {
+                studentLogins.forEach(login => {
+                    const loginDiv = document.createElement('div');
+                    loginDiv.classList.add('p-4', 'border', 'border-gray-300', 'rounded-lg');
+                    loginDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold">${login.name}</h3>
+                        <p><strong>CET Number:</strong> ${login.cet_number}</p>
+                        <p><strong>Login Time:</strong> ${new Date(login.login_time).toLocaleString()}</p>
+                    `;
+                    studentLoginsContainer.appendChild(loginDiv);
+                });
+            } else {
+                studentLoginsContainer.innerHTML = '<p class="text-red-600">No student login data available or incorrect format.</p>';
+            }
+        }
+    
+        // Fetch the available seats data from the server
+        async function fetchAvailableSeats() {
+            try {
+                const response = await fetch('http://localhost:1234/api/branches', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch branches data: ${response.statusText}`);
+                }
+    
+                const branchesData = await response.json();
+    
+                if (!Array.isArray(branchesData) || branchesData.length === 0) {
+                    throw new Error('Branches data is empty or not in the expected format.');
+                }
+    
+                console.log(branchesData); // Debug: Log the response data to check its structure
+                displayAvailableSeats(branchesData);
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                alert('Error fetching available seats data. Please try again later.');
+            }
+        }
+    
+        // Display available seats data in the table
+        function displayAvailableSeats(branchesData) {
+            const tableBody = document.getElementById('branchesTableBody');
+            tableBody.innerHTML = ''; // Clear any previous rows
+    
+            if (branchesData && branchesData.length > 0) {
+                branchesData.forEach(branch => {
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'hover:bg-gray-100');
+    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-gray-900">${branch.college_name || 'N/A'}</td>
+                        <td class="px-6 py-4 text-gray-900">${branch.branch_name || 'N/A'}</td>
+                        <td class="px-6 py-4 text-gray-900">${branch.available_seats || 'N/A'}</td>
+                    `;
+    
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">No available seats data found</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+    
+        // Logout Button functionality
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            window.location.href = 'index.html'; // Redirect to login page
+        });
+    
+        // Trigger allocation process
+        const allocateButton = document.getElementById('allocateButton');
+        const allocationSection = document.getElementById('allocationSection');
+    
+        allocateButton.addEventListener('click', () => {
+            allocationSection.classList.remove('hidden');
+        });
+    
+        // Handle the start of allocation
+        const startAllocationButton = document.getElementById('startAllocation');
+        const allocationStatus = document.getElementById('allocationStatus');
+    
+        startAllocationButton.addEventListener('click', () => {
+            allocationStatus.classList.remove('hidden');
+            setTimeout(() => {
+                allocationStatus.textContent = "Allocation Completed Successfully!";
+                allocationStatus.classList.add('text-green-700');
+            }, 3000);
+        });
+    
+        // Navbar Click Events
+        document.getElementById('allocationNav').addEventListener('click', () => {
+            showSection('allocation');
+            setActiveNavItem('allocationNav');
+        });
+    
+        document.getElementById('availableSeatsNav').addEventListener('click', () => {
+            fetchAvailableSeats();
+            showSection('availableSeats');
+            setActiveNavItem('availableSeatsNav');
+        });
+    
+        document.getElementById('statusNav').addEventListener('click', async () => {
+            statusSection.classList.toggle('hidden');
+            studentLoginsContainer.innerHTML = '<p>Loading student login information...</p>';
+    
+            try {
+                const response = await fetch('http://localhost:1234/api/student-logins');
+                if (!response.ok) throw new Error('Failed to fetch student logins.');
+    
+                const studentLogins = await response.json();
+                studentLoginsContainer.innerHTML = '';
+    
+                studentLogins.forEach(login => {
+                    const loginDiv = document.createElement('div');
+                    loginDiv.classList.add('p-4', 'border', 'border-gray-300', 'rounded-lg');
+                    loginDiv.innerHTML = `
+                        <p><strong>CET Number:</strong> ${login.cet_number}</p> <!-- Changed from student_id to cet_number -->
+                        <p><strong>Name:</strong> ${login.name}</p>
+                        <p><strong>Login Time:</strong> ${new Date(login.login_time).toLocaleString()}</p>
+                    `;
+                    studentLoginsContainer.appendChild(loginDiv);
+                });
+            } catch (err) {
+                studentLoginsContainer.innerHTML = `<p class="text-red-600">${err.message}</p>`;
+            }
+        });
+    
+        // Show the appropriate section based on the clicked nav item
+        function showSection(section) {
+            document.getElementById('allocationSection').classList.add('hidden');
+            document.getElementById('availableSeatsSection').classList.add('hidden');
+            document.getElementById('statusSection').classList.add('hidden');
+    
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+        }
+    
+        // Set active state for the clicked nav item
+        function setActiveNavItem(navItemId) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('bg-gray-100', 'text-blue-500'));
+            document.getElementById(navItemId).classList.add('bg-gray-100', 'text-blue-500');
+        }
+    
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', fetchStudentLogins);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLoggedInAdminData(); // Fetch and display logged-in admin data
+            fetchStudentLogins(); // Fetch and display student logins
+            showSection('allocation'); // Show the allocation section by default
+        });
+    </script>
+    
+
+    
+    
+</body>
+
+
+<!-- mysql> DELIMITER ;
+mysql> DELIMITER $$
+mysql>
+mysql> CREATE TRIGGER allocatedseats
+    -> AFTER INSERT ON student_choices
+    -> FOR EACH ROW
+    -> BEGIN
+    ->     -- Declare variables for checking allocation
+    ->     DECLARE v_student_id INT;
+    ->     DECLARE v_college_name VARCHAR(255);
+    ->     DECLARE v_branch_name VARCHAR(255);
+    ->
+    ->     -- Fetch the student id, college name, and branch name from the inserted row
+    ->     SET v_student_id = NEW.student_id;
+    ->     SET v_college_name = NEW.college_name;
+    ->     SET v_branch_name = NEW.branch_name;
+    ->
+    ->     -- Ensure that the allocation is only performed if the student has not been allocated a seat yet
+    ->     IF NOT EXISTS (SELECT 1 FROM allocation_log WHERE student_id = v_student_id) THEN
+    ->         -- Only allocate if the college_name and branch_name are not NULL
+    ->         IF v_college_name IS NOT NULL AND v_branch_name IS NOT NULL THEN
+    ->             -- Insert into the allocation_log table
+    ->             INSERT INTO allocation_log (student_id, college_name, branch_name, allocated_at)
+    ->             VALUES (v_student_id, v_college_name, v_branch_name, NOW());
+    ->
+    ->             -- Update the student table to reflect the allocation
+    ->             UPDATE students
+    ->             SET allocated_seat = CONCAT(v_college_name, ' - ', v_branch_name)
+    ->             WHERE student_id = v_student_id;
+    ->         END IF;
+    ->     END IF;
+    -> END $$
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>
+mysql> DELIMITER ;
+mysql> call allocatedseats();
+ERROR 1305 (42000): PROCEDURE kcet_seats.allocatedseats does not exist
+mysql> -->

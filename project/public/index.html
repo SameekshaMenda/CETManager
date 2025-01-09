@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .transition-transform {
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-blue-100 via-blue-200 to-blue-50 flex items-center justify-center min-h-screen">
+    <div id="loginContainer" class="w-full max-w-7xl h-auto bg-white flex flex-col lg:flex-row overflow-hidden shadow-2xl rounded-3xl transform transition-transform">
+        <!-- Welcome Section -->
+        <div id="welcomeSection" class="bg-blue-600 text-white w-full lg:w-1/2 flex flex-col justify-center items-center p-10 space-y-4">
+            <h1 class="text-6xl font-extrabold mb-8 text-center">Welcome to KCET</h1>
+            <p class="text-2xl text-center">
+                Login to explore your personalized dashboard!
+            </p>
+        </div>
+
+        <!-- Login Form Section -->
+        <div id="formSection" class="flex-1 flex flex-col justify-center items-center p-10 space-y-10">
+            <h1 class="text-5xl font-bold text-gray-800 text-center mb-8">Login</h1>
+
+            <!-- Role Toggle Buttons -->
+            <div class="flex justify-center w-full max-w-4xl space-x-4">
+                <button id="studentToggle" 
+                    class="flex-1 py-4 text-2xl font-medium bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all">
+                    Student
+                </button>
+                <button id="adminToggle" 
+                    class="flex-1 py-4 text-2xl font-medium bg-gray-300 text-gray-800 rounded-full shadow-lg hover:bg-gray-400 focus:ring-4 focus:ring-gray-400 transition-all">
+                    Admin
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="loginForm" class="w-full max-w-4xl space-y-8">
+                <div class="relative">
+                    <label for="cet_number" class="block text-xl font-medium text-gray-700 mb-4">CET Number / Admin ID</label>
+                    <input type="text" id="cet_number" name="cet_number" 
+                        class="block w-full px-6 py-4 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-transparent text-lg shadow-lg"
+                        placeholder="Enter your CET Number" required>
+                    <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-400">
+                        <i class="fas fa-user"></i>
+                    </span>
+                </div>
+                <div class="relative">
+                    <label for="password" class="block text-xl font-medium text-gray-700 mb-4">Password</label>
+                    <input type="password" id="password" name="password" 
+                        class="block w-full px-6 py-4 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-transparent text-lg shadow-lg"
+                        placeholder="Enter your password" required>
+                    <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-400">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                </div>
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-full shadow-lg transform transition-transform hover:scale-105 text-lg">
+                    Login
+                </button>
+            </form>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden text-lg text-red-500 mt-4">
+                Invalid credentials. Please try again.
+            </div>
+
+            <!-- Additional Links -->
+            <div class="text-gray-600 text-center">
+                <a href="#" class="text-blue-600 hover:text-blue-800 transition">Forgot Password?</a>
+                <span class="mx-2">|</span>
+                <a href="#" class="text-blue-600 hover:text-blue-800 transition">Create an Account</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const studentToggle = document.getElementById('studentToggle');
+        const adminToggle = document.getElementById('adminToggle');
+        const cetNumberInput = document.getElementById('cet_number');
+        const loginContainer = document.getElementById('loginContainer');
+        const welcomeSection = document.getElementById('welcomeSection');
+        const formSection = document.getElementById('formSection');
+
+        function toggleRole(isAdmin) {
+            if (isAdmin) {
+                cetNumberInput.placeholder = "Enter your Admin ID";  // Change placeholder for Admin
+                document.querySelector('label[for="cet_number"]').textContent = "Admin ID";  // Change label text for Admin
+                loginContainer.classList.add('flex-row-reverse');
+                welcomeSection.classList.add('lg:order-last');
+                adminToggle.classList.remove('bg-gray-300', 'text-gray-800');
+                adminToggle.classList.add('bg-blue-600', 'text-white');
+                studentToggle.classList.remove('bg-blue-600', 'text-white');
+                studentToggle.classList.add('bg-gray-300', 'text-gray-800');
+            } else {
+                cetNumberInput.placeholder = "Enter your CET Number";  // Change placeholder for Student
+                document.querySelector('label[for="cet_number"]').textContent = "CET Number";  // Change label text for Student
+                loginContainer.classList.remove('flex-row-reverse');
+                welcomeSection.classList.remove('lg:order-last');
+                studentToggle.classList.remove('bg-gray-300', 'text-gray-800');
+                studentToggle.classList.add('bg-blue-600', 'text-white');
+                adminToggle.classList.remove('bg-blue-600', 'text-white');
+                adminToggle.classList.add('bg-gray-300', 'text-gray-800');
+            }
+        }
+
+        studentToggle.addEventListener('click', () => toggleRole(false));
+        adminToggle.addEventListener('click', () => toggleRole(true));
+
+        // Handle Login
+       // Handle Login
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const cetNumber = document.getElementById('cet_number').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!cetNumber || !password) {
+        alert("Please fill in all details.");
+        return;
+    }
+
+    const data = {
+        cet_number: cetNumber,
+        password: password,
+        role: adminToggle.classList.contains('bg-blue-600') ? 'admin' : 'student'
+    };
+
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.status === 200) {
+            // Store CET Number and Admin ID in localStorage
+            localStorage.setItem('cet_number', cetNumber);
+            if (data.role === 'admin') {
+                localStorage.setItem('admin_id', cetNumber);  // Save Admin ID
+            }
+
+            alert('Login successful!');
+
+            // Redirect based on user role
+            if (adminToggle.classList.contains('bg-blue-600')) {
+                window.location.href = 'admindashboard.html';  // Redirect to Admin Dashboard
+            } else {
+                window.location.href = 'dashboard.html';  // Redirect to Student Dashboard
+            }
+        } else {
+            errorMessage.classList.remove('hidden');
+            errorMessage.textContent = result.error || 'Invalid credentials. Please try again.';
+        }
+    } catch (error) {
+        console.error('Error during login:', error);
+        errorMessage.classList.remove('hidden');
+        errorMessage.textContent = 'Server error. Please try again later.';
+    }
+});
+
+    </script>
+</body>
+</html>

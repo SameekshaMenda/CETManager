@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choice Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+</head>
+<body class="bg-blue-50 min-h-screen flex items-center justify-center">
+
+    <div class="container mx-auto w-full max-w-9xl p-12 bg-white rounded-lg shadow-2xl flex flex-col">
+        <h1 class="text-5xl font-bold text-center text-blue-600 mb-10">Choice Entry</h1>
+
+        <!-- Branch Details Table -->
+        <h3 class="text-3xl font-semibold text-blue-700 mb-6">Available Branches</h3>
+        <div class="overflow-x-auto rounded-lg shadow-md bg-white mb-8">
+            <table class="w-full border-collapse border border-gray-300 text-left text-xl">
+                <thead>
+                    <tr class="bg-blue-100 text-blue-700">
+                        <th class="border border-gray-300 px-8 py-4">Branch Name</th>
+                        <th class="border border-gray-300 px-8 py-4">College Name</th>
+                        <th class="border border-gray-300 px-8 py-4">Applied Count</th>
+                        <th class="border border-gray-300 px-8 py-4">Number of Branches</th> <!-- New Column -->
+                    </tr>
+                </thead>
+                <tbody id="branchesTable" class="text-gray-600">
+                    <!-- Dynamic Rows from Database -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Choice Entry Form -->
+        <h3 class="text-3xl font-semibold text-blue-700 mt-10 mb-6">Your Choices</h3>
+        <form id="choiceEntryForm" class="space-y-8">
+            <div class="overflow-x-auto rounded-lg shadow-md bg-white mb-8">
+                <table class="w-full border-collapse border border-gray-300 text-left text-xl">
+                    <thead>
+                        <tr class="bg-blue-100 text-blue-700">
+                            <th class="border border-gray-300 px-8 py-4">Priority</th>
+                            <th class="border border-gray-300 px-8 py-4">College Name</th>
+                            <th class="border border-gray-300 px-8 py-4">Branch Name</th>
+                            <th class="border border-gray-300 px-8 py-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="choicesTable" class="text-gray-600">
+                        <!-- User Choices will appear here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button type="button" onclick="addChoiceRow()" class="bg-blue-500 text-white text-lg px-8 py-4 rounded-lg shadow hover:bg-blue-600 transition-all duration-300">
+                    Add Choice
+                </button>
+                <button type="submit" class="bg-blue-600 text-white text-lg px-8 py-4 rounded-lg shadow hover:bg-blue-700 transition-all duration-300">
+                    Submit Choices
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let branches = [];
+        let choices = [];
+    
+        async function fetchBranches() {
+            try {
+                const response = await axios.get('/api/branches/withCount');
+                branches = response.data;
+
+                // Group by College Name to count the number of branches
+                const branchCounts = branches.reduce((acc, branch) => {
+                    if (!acc[branch.college_name]) {
+                        acc[branch.college_name] = 0;
+                    }
+                    acc[branch.college_name]++;
+                    return acc;
+                }, {});
+
+                const branchesTable = document.getElementById('branchesTable');
+                branchesTable.innerHTML = branches.map(branch => ` 
+                    <tr class="hover:bg-blue-50">
+                        <td class="border border-gray-300 px-8 py-4 text-xl">${branch.branch_name}</td>
+                        <td class="border border-gray-300 px-8 py-4 text-xl">${branch.college_name}</td>
+                        <td class="border border-gray-300 px-8 py-4 text-xl">${branch.applied_count}</td>
+                        <td class="border border-gray-300 px-8 py-4 text-xl">${branchCounts[branch.college_name]}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+                alert('Failed to load branches.');
+            }
+        }
+    
+        function addChoiceRow() {
+            const choicesTable = document.getElementById('choicesTable');
+            const rowIndex = choices.length + 1;
+    
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="border border-gray-300 px-8 py-4 text-xl">${rowIndex}</td>
+                <td class="border border-gray-300 px-8 py-4">
+                    <select class="form-select college-select w-full px-6 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updateBranchOptions(this)">
+                        <option value="" disabled selected>Select College</option>
+                        ${[...new Set(branches.map(branch => branch.college_name))].map(college => `
+                            <option value="${college}">${college}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="border border-gray-300 px-8 py-4">
+                    <select class="form-select branch-select w-full px-6 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+                        <option value="" disabled selected>Select Branch</option>
+                    </select>
+                </td>
+                <td class="border border-gray-300 px-8 py-4 text-center">
+                    <button type="button" onclick="deleteChoiceRow(this)" class="bg-red-500 text-white text-lg px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300">
+                        Delete
+                    </button>
+                </td>
+            `;
+    
+            choicesTable.appendChild(row);
+            choices.push({});
+        }
+    
+        function updateBranchOptions(collegeSelect) {
+            const row = collegeSelect.closest('tr');
+            const branchSelect = row.querySelector('.branch-select');
+            const selectedCollege = collegeSelect.value;
+            const filteredBranches = branches.filter(branch => branch.college_name === selectedCollege);
+            branchSelect.innerHTML = `
+                <option value="" disabled selected>Select Branch</option>
+                ${filteredBranches.map(branch => `
+                    <option value="${branch.branch_name}">${branch.branch_name}</option>`).join('')}
+            `;
+            branchSelect.disabled = false;
+        }
+    
+        function deleteChoiceRow(button) {
+            const row = button.closest('tr');
+            const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+            row.remove();
+            choices.splice(rowIndex, 1);
+        }
+    
+        document.getElementById('choiceEntryForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const cetNumber = localStorage.getItem('cet_number');
+            if (!cetNumber) {
+                alert('CET number not found. Please log in again.');
+                return;
+            }
+            const rows = document.querySelectorAll('#choicesTable tr');
+            const submittedChoices = Array.from(rows).map((row, index) => {
+                const collegeName = row.querySelector('.college-select').value;
+                const branchName = row.querySelector('.branch-select').value;
+                if (!collegeName || !branchName) {
+                    throw new Error('Please select both college and branch for all choices.');
+                }
+                return {
+                    priority: index + 1,
+                    college_name: collegeName,
+                    branch_name: branchName,
+                };
+            });
+            try {
+                const response = await axios.post('/api/submitChoices', {
+                    cet_number: cetNumber,
+                    choices: submittedChoices,
+                });
+                alert('Choices submitted successfully!');
+                window.location.href = `/submittedPage.html?cetNumber=${cetNumber}`;
+            } catch (error) {
+                console.error('Error submitting choices:', error);
+                alert(`Failed to submit choices: ${error.response?.data?.error || 'Please try again later.'}`);
+            }
+        });
+    
+        fetchBranches();
+    </script>
+
+</body>
+</html>
