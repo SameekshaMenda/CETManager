@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Additional custom styles if needed */
+        .profile-container {
+            max-width: 700px;
+            margin: 100px auto;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-blue-50">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white shadow-lg fixed top-0 left-0 w-full z-50">
+        <div class="container mx-auto flex justify-between items-center py-4 px-6">
+            <!-- <a href="dashboard.html" class="text-3xl font-semibold navbar-link text-white hover:text-gray-200">KCET Dashboard</a> -->
+            <div class="ml-auto">
+                <a href="dashboard.html" class="px-6 py-2 text-lg font-medium hover:bg-blue-700 rounded-md">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Container -->
+    <div class="profile-container mt-24">
+        <h2 class="text-center text-3xl font-bold text-gray-800 mb-6">Student Profile</h2>
+
+        <!-- Profile Details Section -->
+        <div id="profileDetails" class="space-y-6">
+            <h3 class="text-2xl font-semibold text-gray-700">Student Information</h3>
+            <div class="space-y-4">
+                <p class="text-lg"><strong class="font-medium">Name:</strong> <span id="studentName" class="text-gray-600">Loading...</span></p>
+                <p class="text-lg"><strong class="font-medium">CET Number:</strong> <span id="studentCETNumber" class="text-gray-600">Loading...</span></p>
+                <p class="text-lg"><strong class="font-medium">Rank Number:</strong> <span id="studentRankNumber" class="text-gray-600">Loading...</span></p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="alert alert-danger mt-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 error-message hidden">
+            <strong class="font-bold">Error:</strong> <span id="errorText"></span>
+        </div>
+    </div>
+
+    <!-- Tailwind CSS and JS -->
+    <script>
+        // Fetch student details after successful login
+        window.onload = async function () {
+            const cetNumber = localStorage.getItem('cet_number'); // Get the CET number from local storage
+
+            if (!cetNumber) {
+                window.location.href = 'login.html'; // Redirect to login page if no CET number found
+                return;
+            }
+
+            try {
+                // Send CET number to the server to fetch student details
+                const response = await fetch('/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cet_number: cetNumber }) // Send CET number to the server
+                });
+
+                const result = await response.json();
+
+                if (response.status === 200) {
+                    // Success: Display student data
+                    const student = result.student;
+                    document.getElementById('studentName').textContent = student.name;
+                    document.getElementById('studentCETNumber').textContent = student.cet_number;
+                    document.getElementById('studentRankNumber').textContent = student.rank_number;
+                    document.getElementById('errorMessage').style.display = 'none';
+                } else {
+                    // Handle case where student is not found
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('errorText').textContent = result.message || 'Student not found';
+                }
+            } catch (error) {
+                console.error('Error fetching student details:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorText').textContent = 'Failed to fetch data from the server. Please try again later.';
+            }
+        };
+    </script>
+
+</body>
+
+</html>

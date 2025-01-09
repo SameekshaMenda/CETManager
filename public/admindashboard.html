@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+/* Allocation Button Styling */
+#startAllocation {
+    background-color: #2d3748; /* Same color as the sidebar background */
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+#startAllocation:hover {
+    background-color: #4a5568; /* Darker shade on hover, same as the sidebar hover */
+}
+
+#startAllocation:focus {
+    outline: none; /* Remove outline when clicked */
+    box-shadow: none; /* Remove box shadow */
+}
+
+#startAllocation:active {
+    background-color: #1e293b; /* Even darker blue when pressed */
+    transform: scale(1); /* No scaling on active state */
+}
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #1e40af;
+            position: fixed;
+            transition: all 0.3s;
+            border-radius: 10px;
+            padding-top: 20px;
+        }
+
+        .sidebar .nav-item {
+            padding: 15px 20px;
+            color: white;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .sidebar .nav-item:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .sidebar .active-nav-item {
+            background-color: #3b82f6;
+        }
+
+        .sidebar .logout-item {
+            background-color: #ef4444;
+            margin-top: auto;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar .logout-item:hover {
+            background-color: #dc2626;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding-top: 20px;
+            transition: margin-left 0.3s;
+        }
+
+        /* Header Section */
+        header {
+            background-color: #1e40af;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive behavior for small screens */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .content {
+                margin-left: 200px;
+            }
+
+            .sidebar .nav-item {
+                font-size: 14px;
+            }
+        }
+
+        /* Adjustments for mobile view */
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-radius: 0;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .sidebar .nav-item {
+                font-size: 14px;
+            }
+        }
+
+        /* Button Styling */
+       /* Button Styling */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+    outline: none;  /* Prevent outline when button is clicked */
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.btn-red {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-red:hover {
+    background-color: #dc2626;
+}
+
+.btn-green {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-green:hover {
+    background-color: #059669;
+}
+
+.btn-blue {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-blue:hover {
+    background-color: #2563eb;
+}
+
+button:focus {
+    outline: none;  /* Remove focus outline */
+    box-shadow: none;  /* Remove box shadow */
+}
+
+button:active {
+    background-color: #2563eb;  /* Change color on active state */
+    transform: scale(1);  /* Remove scaling on active state */
+}
+
+        /* Section Styling */
+        .section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        thead {
+            background-color: #f3f4f6;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Sidebar and Content Wrapper -->
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="sidebar flex flex-col">
+            <div class="p-5 text-white text-2xl font-semibold">Admin Dashboard</div>
+            <div id="navItems">
+                <div class="nav-item" id="allocationNav">Allocation</div>
+                <div class="nav-item" id="availableSeatsNav">Available Seats</div>
+                <div class="nav-item" id="statusNav">Status</div>
+                <a href="index.html">
+                    <div class="nav-item" id="logoutNav">Logout</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content w-full p-10 space-y-10">
+
+            <!-- Header Section -->
+            <header class="flex justify-between items-center bg-blue-600 text-white p-5 rounded-lg shadow-xl">
+                <h1 class="text-3xl font-extrabold">Admin Dashboard</h1>
+            </header>
+
+            <!-- Admin Data Section -->
+            <section class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Admin Data</h2>
+                <div id="adminData" class="space-y-4">
+                    <!-- Admin data will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Allocation Section -->
+            <section id="allocationSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-2xl font-bold mb-4">Allocation Process</h2>
+                <p class="text-lg">Initiate the allocation process for the students logged in.</p>
+                <button id="startAllocation"
+                    class="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition">Start
+                    Allocation</button>
+                <div id="allocationStatus" class="mt-4 hidden text-green-600">Allocation is in progress...</div>
+            </section>
+
+            <!-- Available Seats Section -->
+            <section id="availableSeatsSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-2xl font-bold mb-4">Available Seats</h2>
+                <p class="text-lg mb-4">Number of available seats for students in each branch.</p>
+                <table id="branchesTable" class="min-w-full bg-white border rounded-lg">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">College</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">Branch</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">Seats</th>
+                        </tr>
+                    </thead>
+                    <tbody id="branchesTableBody">
+                        <!-- Rows will be dynamically added here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Status Section -->
+            <section id="statusSection" class="bg-white p-6 rounded-lg shadow-lg hidden">
+                <h2 class="text-2xl text-blue-900 font-bold mb-4">Current Status</h2>
+                <p class="text-lg">Current status of the system.</p>
+                <div id="currentStatus" class="text-blue-600">System is active</div>
+
+                <!-- Student Login Info -->
+                <h3 class="text-xl font-semibold mt-4">Student Login Information</h3>
+                <div id="studentLoginsContainer" class="space-y-4">
+                    <!-- Student login data will be dynamically inserted here -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('logoutNav').addEventListener('click', () => {
+            alert("Logged out");
+        });
+    </script>
+</body>
+
+</html>
+
+
+    <script>
+        // Fetch the logged-in admin data from the server
+        async function fetchLoggedInAdminData() {
+            try {
+                const response = await fetch('http://localhost:1234/api/admins', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch admin data: ${response.statusText}`);
+                }
+
+                const adminData = await response.json();
+
+                if (!Array.isArray(adminData) || adminData.length === 0) {
+                    throw new Error('Admin data is empty or not in the expected format.');
+                }
+
+                console.log(adminData); // Debug: Log the response data to check its structure
+                displayAdminData(adminData[0]); // Assuming we want to display the first admin in the list
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                alert('Error fetching admin data. Please try again later.');
+            }
+        }
+
+        // Display logged-in admin data
+        function displayAdminData(adminData) {
+            const adminDataContainer = document.getElementById('adminData');
+            adminDataContainer.innerHTML = ''; // Clear any previous data
+
+            if (adminData && adminData.username && adminData.admin_id) {
+                const adminDiv = document.createElement('div');
+                adminDiv.classList.add('p-4', 'border', 'border-gray-300', 'rounded-lg');
+                adminDiv.innerHTML = `
+                    <h3 class="text-xl font-semibold">${adminData.username}</h3>
+                    <p><strong>Admin ID:</strong> ${adminData.admin_id}</p>
+                    <p><strong>Email:</strong> ${adminData.email || 'N/A'}</p>
+                    <p><strong>Role:</strong> ${adminData.role || 'N/A'}</p>
+                    <p><strong>Status:</strong> ${adminData.status || 'N/A'}</p>
+                    <p><strong>Last Login:</strong> ${adminData.last_login ? new Date(adminData.last_login).toLocaleString() : 'N/A'}</p>
+                    <img src="${adminData.profile_picture_url || 'placeholder.jpg'}" 
+                         alt="${adminData.username}'s profile picture" 
+                         class="mt-2 rounded-full h-24 w-24">
+                `;
+                adminDataContainer.appendChild(adminDiv);
+            } else {
+                adminDataContainer.innerHTML = '<p class="text-red-600">Admin data is incomplete or unavailable.</p>';
+            }
+        }
+
+        // Event listener for status button click
+        const statusNav = document.getElementById('statusNav');
+        const statusSection = document.getElementById('statusSection');
+        const studentLoginsContainer = document.getElementById('studentLoginsContainer');
+
+        statusNav.addEventListener('click', async () => {
+            statusSection.classList.toggle('hidden');
+            studentLoginsContainer.innerHTML = '<p>Loading student login information...</p>';
+
+            try {
+                const response = await fetch('http://localhost:1234/api/student-logins');
+                if (!response.ok) throw new Error('Failed to fetch student logins.');
+
+                const studentLogins = await response.json();
+                studentLoginsContainer.innerHTML = '';
+
+                studentLogins.forEach(login => {
+                    const loginDiv = document.createElement('div');
+                    loginDiv.classList.add('p-4', 'border', 'border-gray-300', 'rounded-lg');
+                    loginDiv.innerHTML = `
+                        <p><strong>CET Number:</strong> ${login.cet_number}</p>
+                        <p><strong>Name:</strong> ${login.name}</p>
+                        <p><strong>Login Time:</strong> ${new Date(login.login_time).toLocaleString()}</p>
+                    `;
+                    studentLoginsContainer.appendChild(loginDiv);
+                });
+            } catch (err) {
+                studentLoginsContainer.innerHTML = `<p class="text-red-600">${err.message}</p>`;
+            }
+        });
+        
+
+        //this is to navigate to other page in sidebar
+        // Event listener for "Available Seats" navigation item
+        const availableSeatsNav = document.getElementById('availableSeatsNav');
+
+        availableSeatsNav.addEventListener('click', () => {
+            // Keep the same sidebar in Available Seats page
+            window.location.href = 'availableseats.html';
+        });
+
+        const allocationNav = document.getElementById('allocationNav');
+
+        allocationNav.addEventListener('click', () => {
+            // Keep the same sidebar in Available Seats page
+            window.location.href = 'allocate.html';
+        });
+
+        // Initialize
+        fetchLoggedInAdminData();
+    </script>
+</body>
+
+</html>

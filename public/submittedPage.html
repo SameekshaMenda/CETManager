@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitted Choices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+</head>
+
+<body class="bg-blue-50 min-h-screen flex items-center justify-center font-sans">
+
+    <div class="container mx-auto w-full max-w-7xl p-16 bg-white rounded-xl shadow-xl flex flex-col space-y-10">
+
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-extrabold text-blue-800 tracking-wide mb-6">
+                <span class="text-blue-600">Submitted</span> Choices
+            </h1>
+            <p class="text-xl text-gray-600 max-w-4xl mx-auto">Explore the choices you submitted for your CET number. Find your priorities, colleges, and branches here. Everything is designed for better clarity and visibility.</p>
+        </div>
+
+        <!-- Choices Table -->
+        <div id="choicesTable" class="w-full text-gray-700">
+            <!-- Dynamic Choices will appear here -->
+        </div>
+
+        <!-- Back to Dashboard Button -->
+        <div class="text-center mt-12">
+            <button onclick="location.href='dashboard.html'" class="bg-blue-600 text-white px-12 py-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 text-lg font-semibold transform hover:scale-105">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Home
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchSubmittedChoices() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cetNumber = urlParams.get('cetNumber');
+
+            if (!cetNumber) {
+                alert('CET number is missing.');
+                return;
+            }
+
+            try {
+                const response = await axios.get(`/choices/${cetNumber}`);
+                const choices = response.data;
+
+                const choicesTable = document.getElementById('choicesTable');
+                if (choices.length > 0) {
+                    choicesTable.innerHTML = `
+                        <table class="w-full table-auto border-separate border-spacing-4 rounded-lg shadow-lg">
+                            <thead>
+                                <tr class="bg-blue-600 text-white text-xl">
+                                    <th class="border border-gray-300 px-10 py-6">Priority</th>
+                                    <th class="border border-gray-300 px-10 py-6">College Name</th>
+                                    <th class="border border-gray-300 px-10 py-6">Branch Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${choices.map(choice => `
+                                    <tr class="text-lg bg-white hover:bg-blue-50 transition-all duration-300 ease-in-out transform hover:scale-105">
+                                        <td class="border border-gray-300 px-10 py-6">${choice.priority}</td>
+                                        <td class="border border-gray-300 px-10 py-6">${choice.college_name}</td>
+                                        <td class="border border-gray-300 px-10 py-6">${choice.branch_name}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    choicesTable.innerHTML = `<p class="text-lg text-center text-gray-500">No choices found for this CET number.</p>`;
+                }
+            } catch (error) {
+                console.error('Error fetching submitted choices:', error);
+                alert('Failed to fetch choices.');
+            }
+        }
+
+        fetchSubmittedChoices();
+    </script>
+
+</body>
+
+</html>

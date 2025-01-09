@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Availability | KCET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<!-- Navbar -->
+<nav class="bg-blue-600 text-white p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="/dashboard" class="text-xl font-semibold">KCET Dashboard</a>
+        <a href="javascript:void(0)" id="logoutButton" class="bg-red-600 p-2 rounded-md hover:bg-red-700">Logout</a>
+    </div>
+</nav>
+
+<!-- Seat Availability Container -->
+<div class="container mx-auto my-10 p-6 bg-white rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold text-center mb-6">Seat Availability</h2>
+
+    <!-- Error message -->
+    <div id="errorMessage" class="bg-red-500 text-white p-4 mb-4 rounded-md hidden">
+        <strong>Error:</strong> <span id="errorText"></span>
+    </div>
+
+    <!-- Branch Data Table -->
+    <table id="branchesTable" class="min-w-full table-auto">
+        <thead class="bg-blue-600 text-white">
+            <tr>
+                <th class="py-2 px-4">Branch Name</th>
+                <th class="py-2 px-4">Total Seats</th>
+                <th class="py-2 px-4">Seats Available</th>
+                <th class="py-2 px-4">Students Applied</th>
+            </tr>
+        </thead>
+        <tbody class="text-gray-700" id="branchDetails">
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Tailwind CSS and JavaScript -->
+<script>
+    // Fetch and display branch data with seat availability and applied count
+    window.onload = async function() {
+        try {
+            //const response = await fetch('/api/branches');
+            const response = await fetch('/api/branches/withCount');
+            const result = await response.json();
+
+            if (response.status === 200 && result.length > 0) {
+                const branchesTable = document.getElementById('branchDetails');
+                branchesTable.innerHTML = ''; // Clear any previous data
+
+                result.forEach(branch => {
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b');
+
+                    // Create table cells for each branch detail
+                    const branchName = document.createElement('td');
+                    branchName.classList.add('py-2', 'px-4');
+                    branchName.textContent = branch.branch_name;
+                    
+                    const totalSeats = document.createElement('td');
+                    totalSeats.classList.add('py-2', 'px-4');
+                    totalSeats.textContent = branch.total_seats;
+
+                    const seatsAvailable = document.createElement('td');
+                    seatsAvailable.classList.add('py-2', 'px-4');
+                    //seatsAvailable.textContent = branch.total_seats - branch.applied_count;
+                    seatsAvailable.textContent = branch.available_seats;
+
+                    const appliedCount = document.createElement('td');
+                    appliedCount.classList.add('py-2', 'px-4');
+                    appliedCount.textContent = branch.applied_count;
+
+                    // Append cells to row
+                    row.appendChild(branchName);
+                    row.appendChild(totalSeats);
+                    row.appendChild(seatsAvailable);
+                    row.appendChild(appliedCount);
+
+                    // Append row to table body
+                    branchesTable.appendChild(row);
+                });
+            } else {
+                showError('No branch data found.');
+            }
+        } catch (error) {
+            console.error('Error fetching branch data:', error);
+            showError('Failed to fetch branch data.');
+        }
+    };
+
+    // Logout functionality
+    document.getElementById('logoutButton').addEventListener('click', () => {
+        localStorage.removeItem('cet_number'); // Clear CET number from local storage
+        window.location.href = 'index.html'; // Redirect to login page after logout
+    });
+
+    // Function to display error message
+    function showError(message) {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorText').textContent = message;
+    }
+</script>
+
+</body>
+</html>
